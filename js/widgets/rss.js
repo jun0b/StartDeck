@@ -1,0 +1,366 @@
+/**
+ * RSSWidget - RSSフィードウィジェット
+ */
+class RSSWidget extends WidgetBase {
+  static widgetType = 'rss';
+  static defaultConfig = {
+    title: 'ニュース',
+    feeds: [
+      { name: 'Google ニュース', url: 'https://news.google.com/rss?hl=ja&gl=JP&ceid=JP:ja' },
+    ],
+    activeTab: 0,
+    perPage: 7,
+    showThumbnail: true
+  };
+
+  constructor(id, config) {
+    super(id, config);
+    this._articles = {};
+    this._currentPage = 0;
+    this._loading = false;
+
+    // 既存ユーザー向け：初期設定がNHKのままの場合、Googleニュースに自動置換
+    if (this.config.feeds && this.config.feeds.length === 1 &&
+        this.config.feeds[0].url === 'https://www.nhk.or.jp/rss/news/cat0.xml') {
+      this.config.feeds[0] = { name: 'Google ニュース', url: 'https://news.google.com/rss?hl=ja&gl=JP&ceid=JP:ja' };
+      this.save();
+    }
+  }
+
+  renderBody() {
+    const feeds = this.config.feeds || [];
+    if (feeds.length === 0) {
+      return `<div class="empty-state" style="padding:20px 0">フィードがありません<br><span style="font-size:0.72rem;color:var(--text-tertiary);margin-top:4px;display:inline-block">「･･･」メニューからフィードを追加してください</span></div>`;
+    }
+
+    const active = Math.min(this.config.activeTab || 0, feeds.length - 1);
+    const tabs = feeds.map((f, i) => {
+      const domain = this._getDomain(f.url);
+      return `<div class="rss-tab ${i === active ? 'active' : ''}" data-idx="${i}">
+        <img class="rss-tab__icon" src="https://www.google.com/s2/favicons?domain=${domain}&sz=32" alt="" onerror="this.style.display='none'">
+        <span>${this._escapeHtml(f.name)}</span>
+      </div>`;
+    }).join('');
+
+    return `
+      <div class="rss-tabs">
+        ${tabs}
+      </div>
+      <div class="rss-article-list" id="rss-list-${this.id}">
+        <div class="loading-spinner"></div>
+      </div>
+      <div class="rss-pagination" id="rss-pagination-${this.id}"></div>
+    `;
+  }
+
+  onMount() {
+    if (!this.element) return;
+
+    this.element.querySelectorAll('.rss-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        this.config.activeTab = parseInt(tab.dataset.idx);
+        this._currentPage = 0;
+        this.save();
+        this.updateBody();
+      });
+    });
+
+    const activeIdx = this.config.activeTab || 0;
+    const feed = (this.config.feeds || [])[activeIdx];
+    if (feed) this._loadFeed(feed, activeIdx);
+  }
+
+  async _loadFeed(feed, idx) {
+    const listEl = this.element?.querySelector(`#rss-list-${this.id}`);
+    if (!listEl) return;
+
+    const cacheKey = `rss_cache_${feed.url}`;
+    const cached = await Storage.get(cacheKey, null);
+    const now = Date.now();
+
+    if (cached && cached.articles && (now - cached.timestamp < 600000)) {
+      this._articles[idx] = cached.articles;
+      this._renderArticles(listEl);
+      return;
+    }
+
+    try {
+      let text;
+      // Service Worker経由でfetch（CORSバイパス）
+      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+        const response = await chrome.runtime.sendMessage({ action: 'proxyFetch', url: feed.url });
+        if (response && response.ok) {
+          text = response.data;
+        } else {
+          throw new Error(response?.error || 'Fetch failed');
+        }
+      } else {
+        // フォールバック: 直接fetch（file://で開いた場合等）
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(feed.url)}`;
+        const res = await fetch(proxyUrl);
+        text = await res.text();
+      }
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(text, 'text/xml');
+
+      const articles = [];
+      const items = doc.querySelectorAll('item, entry');
+      items.forEach(item => {
+        const title = item.querySelector('title')?.textContent || '';
+        const link = item.querySelector('link')?.textContent || item.querySelector('link')?.getAttribute('href') || '';
+        const desc = item.querySelector('description, summary, content')?.textContent || '';
+        const pubDate = item.querySelector('pubDate, published, updated')?.textContent || '';
+        let thumb = '';
+        const enclosure = item.querySelector('enclosure[type^="image"], media\\:content, media\\:thumbnail');
+        if (enclosure) thumb = enclosure.getAttribute('url') || '';
+        if (!thumb) {
+          const imgMatch = desc.match(/<img[^>]+src=["']([^"']+)["']/);
+          if (imgMatch) thumb = imgMatch[1];
+        }
+
+        articles.push({ title, link, desc: this._stripHtml(desc).substring(0, 200), pubDate, thumb });
+      });
+
+      this._articles[idx] = articles;
+      await Storage.set(cacheKey, { articles, timestamp: now });
+      this._renderArticles(listEl);
+    } catch (e) {
+      listEl.innerHTML = `<div class="empty-state">フィードを読み込めませんでした<br><span style="font-size:0.72rem">${this._escapeHtml(e.message)}</span></div>`;
+    }
+  }
+
+  _renderArticles(listEl) {
+    const idx = this.config.activeTab || 0;
+    const articles = this._articles[idx] || [];
+    const perPage = this.config.perPage || 7;
+    const totalPages = Math.max(1, Math.ceil(articles.length / perPage));
+    this._currentPage = Math.min(this._currentPage, totalPages - 1);
+    const start = this._currentPage * perPage;
+    const pageArticles = articles.slice(start, start + perPage);
+    const showThumb = this.config.showThumbnail;
+
+    listEl.innerHTML = pageArticles.map(a => {
+      const timeAgo = a.pubDate ? this._timeAgo(new Date(a.pubDate)) : '';
+      return `
+        <a href="${this._escapeHtml(a.link)}" class="rss-article" target="_blank" rel="noopener">
+          ${showThumb && a.thumb ? `<img class="rss-article__thumb" src="${this._escapeHtml(a.thumb)}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
+          <div class="rss-article__content">
+            <div class="rss-article__title">${this._escapeHtml(a.title)}</div>
+            <div class="rss-article__summary">
+              <span class="rss-article__date">${timeAgo}</span>
+              ${a.desc ? ` — ${this._escapeHtml(a.desc)}` : ''}
+            </div>
+          </div>
+        </a>`;
+    }).join('') || '<div class="empty-state">記事がありません</div>';
+
+    const pagEl = this.element?.querySelector(`#rss-pagination-${this.id}`);
+    if (pagEl && totalPages > 1) {
+      pagEl.innerHTML = `
+        <button class="rss-pagination__btn" id="rss-prev-${this.id}" ${this._currentPage === 0 ? 'disabled' : ''}>
+          <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span class="rss-pagination__info">${this._currentPage + 1}/${totalPages}</span>
+        <button class="rss-pagination__btn" id="rss-next-${this.id}" ${this._currentPage >= totalPages - 1 ? 'disabled' : ''}>
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      `;
+      pagEl.querySelector(`#rss-prev-${this.id}`)?.addEventListener('click', () => {
+        if (this._currentPage > 0) { this._currentPage--; this._renderArticles(listEl); }
+      });
+      pagEl.querySelector(`#rss-next-${this.id}`)?.addEventListener('click', () => {
+        if (this._currentPage < totalPages - 1) { this._currentPage++; this._renderArticles(listEl); }
+      });
+    } else if (pagEl) {
+      pagEl.innerHTML = '';
+    }
+  }
+
+  _timeAgo(date) {
+    const now = new Date();
+    const diff = Math.floor((now - date) / 1000);
+    if (diff < 60) return `${diff}秒前`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}分前`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}時間前`;
+    return `${Math.floor(diff / 86400)}日前`;
+  }
+
+  _getDomain(url) {
+    try { return new URL(url).hostname; } catch { return ''; }
+  }
+
+  _stripHtml(html) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return tmp.textContent || '';
+  }
+
+  _showAddFeedDialog(editIndex = -1) {
+    const isEdit = editIndex >= 0;
+    const feed = isEdit ? this.config.feeds[editIndex] : { name: '', url: '' };
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal">
+        <div class="modal__header"><span class="modal__title">RSSフィードを管理</span><button class="modal__close">&times;</button></div>
+        <div class="modal__body">
+          <div style="margin-bottom:16px;max-height:200px;overflow-y:auto" id="rss-feed-list">
+            ${(this.config.feeds || []).map((f, i) => `
+              <div class="draggable-item" draggable="true" data-idx="${i}" style="display:flex;align-items:center;gap:4px;padding:6px 0;border-bottom:1px solid var(--border-color); cursor: grab; transition: opacity 0.2s;">
+                <span style="font-size:0.8rem;color:var(--text-tertiary);padding-right:4px">≡</span>
+                <span style="flex:1;font-size:0.82rem;font-weight:${i === editIndex ? 'bold' : 'normal'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${this._escapeHtml(f.url)}">${this._escapeHtml(f.name)}</span>
+                <button class="btn btn--ghost" style="padding:2px 8px;font-size:0.72rem" data-action="edit" data-idx="${i}">編集</button>
+                <button class="btn btn--danger" style="padding:2px 8px;font-size:0.72rem" data-remove="${i}">削除</button>
+              </div>
+            `).join('')}
+          </div>
+          <div style="font-weight:600;margin-bottom:8px;font-size:0.85rem">${isEdit ? 'フィードを編集' : '新しいフィードを追加'}</div>
+          <div class="form-group"><label class="form-label">フィード名</label><input class="form-input" id="rss-feed-name" value="${this._escapeHtml(feed.name)}" placeholder="例: NHK"></div>
+          <div class="form-group"><label class="form-label">RSS URL</label><input class="form-input" id="rss-feed-url" value="${this._escapeHtml(feed.url)}" placeholder="https://..."></div>
+        </div>
+        <div class="modal__footer">
+          <button class="btn btn--ghost modal-close-btn">閉じる</button>
+          ${isEdit ? '<button class="btn btn--ghost" id="rss-cancel-edit-btn">追加に戻る</button>' : ''}
+          <button class="btn btn--primary" id="rss-add-btn">${isEdit ? '保存' : '追加'}</button>
+        </div>
+      </div>
+    `;
+
+    const close = () => { overlay.remove(); this.updateBody(); };
+    overlay.querySelector('.modal__close').addEventListener('click', close);
+    overlay.querySelector('.modal-close-btn').addEventListener('click', close);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+    overlay.querySelectorAll('[data-remove]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const i = parseInt(btn.dataset.remove);
+        this.config.feeds.splice(i, 1);
+        this.save();
+        close();
+        this._showAddFeedDialog();
+      });
+    });
+
+    overlay.querySelectorAll('[data-action="edit"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const i = parseInt(btn.dataset.idx);
+        close();
+        this._showAddFeedDialog(i);
+      });
+    });
+
+    let draggedIdx = null;
+    overlay.querySelectorAll('.draggable-item').forEach(item => {
+      item.addEventListener('dragstart', (e) => {
+        draggedIdx = parseInt(item.dataset.idx);
+        e.dataTransfer.effectAllowed = 'move';
+        item.style.opacity = '0.5';
+      });
+      item.addEventListener('dragend', () => {
+        item.style.opacity = '1';
+        overlay.querySelectorAll('.draggable-item').forEach(el => {
+          el.style.borderTop = '';
+          el.style.borderBottom = '1px solid var(--border-color)';
+        });
+      });
+      item.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        const rect = item.getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        if (e.clientY < midY) {
+          item.style.borderTop = '2px solid var(--accent-primary)';
+          item.style.borderBottom = '1px solid var(--border-color)';
+        } else {
+          item.style.borderTop = '';
+          item.style.borderBottom = '2px solid var(--accent-primary)';
+        }
+      });
+      item.addEventListener('dragleave', () => {
+        item.style.borderTop = '';
+        item.style.borderBottom = '1px solid var(--border-color)';
+      });
+      item.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const targetIdx = parseInt(item.dataset.idx);
+        if (draggedIdx === null || draggedIdx === targetIdx) return;
+
+        const rect = item.getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        let insertIdx = targetIdx;
+        if (e.clientY > midY) insertIdx++;
+
+        const arr = this.config.feeds;
+        const [movedItem] = arr.splice(draggedIdx, 1);
+        if (insertIdx > draggedIdx) insertIdx--;
+        arr.splice(insertIdx, 0, movedItem);
+
+        this.save();
+        close();
+
+        let newEditIdx = editIndex;
+        if (editIndex === draggedIdx) newEditIdx = insertIdx;
+        else if (editIndex !== -1) {
+          if (draggedIdx < editIndex && insertIdx >= editIndex) newEditIdx--;
+          else if (draggedIdx > editIndex && insertIdx <= editIndex) newEditIdx++;
+        }
+        this._showAddFeedDialog(newEditIdx);
+      });
+    });
+
+    overlay.querySelector('#rss-cancel-edit-btn')?.addEventListener('click', () => {
+      close();
+      this._showAddFeedDialog(-1);
+    });
+
+    overlay.querySelector('#rss-add-btn')?.addEventListener('click', () => {
+      const name = overlay.querySelector('#rss-feed-name').value.trim();
+      const url = overlay.querySelector('#rss-feed-url').value.trim();
+      if (!name || !url) return;
+      if (!this.config.feeds) this.config.feeds = [];
+      if (isEdit) {
+        this.config.feeds[editIndex] = { name, url };
+      } else {
+        this.config.feeds.push({ name, url });
+      }
+      this.save();
+      close();
+      this._showAddFeedDialog(-1);
+    });
+
+    document.body.appendChild(overlay);
+  }
+
+  getContextMenuItems() {
+    return [
+      { action: 'manageFeeds', label: 'フィードを管理', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' },
+      { action: 'refresh', label: '更新', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>' },
+      { divider: true },
+      ...super.getContextMenuItems()
+    ];
+  }
+
+  handleContextMenuAction(action) {
+    if (action === 'manageFeeds') {
+      this._showAddFeedDialog(-1);
+      return true;
+    } else if (action === 'refresh') {
+      const activeIdx = this.config.activeTab || 0;
+      const feed = (this.config.feeds || [])[activeIdx];
+      if (feed) {
+        Storage.set(`rss_cache_${feed.url}`, null).then(() => this._loadFeed(feed, activeIdx));
+      }
+      return true;
+    }
+    return super.handleContextMenuAction(action);
+  }
+
+  getSettingsFields() {
+    return [
+      { key: 'perPage', label: '1ページあたりの記事数', type: 'number', min: 3, max: 20 },
+      { key: 'showThumbnail', label: 'サムネイルを表示', type: 'checkbox' },
+    ];
+  }
+}
+WidgetTypes.rss = RSSWidget;
