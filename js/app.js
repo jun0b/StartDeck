@@ -19,11 +19,17 @@ const App = {
     WidgetManager.addWidget('bookmark', 0, {
       title: 'ブックマーク',
       displayMode: 'icon',
-      bookmarks: [
-        { name: 'YouTube', url: 'https://www.youtube.com/' },
-        { name: 'Google', url: 'https://www.google.com/' },
-        { name: 'Twitter/X', url: 'https://x.com/' },
-        { name: 'GitHub', url: 'https://github.com/' },
+      activeGroupIndex: 0,
+      groups: [
+        {
+          name: 'よく使う',
+          bookmarks: [
+            { name: 'YouTube', url: 'https://www.youtube.com/' },
+            { name: 'Google', url: 'https://www.google.com/' },
+            { name: 'Twitter/X', url: 'https://x.com/' },
+            { name: 'GitHub', url: 'https://github.com/' },
+          ]
+        }
       ]
     });
     WidgetManager.addWidget('weather', 0, { title: '天気', locationName: '東京', latitude: 35.6895, longitude: 139.6917 });
