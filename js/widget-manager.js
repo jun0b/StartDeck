@@ -151,6 +151,10 @@ const WidgetManager = {
     dashboard.innerHTML = '';
     dashboard.style.setProperty('--column-count', this.layout.columns);
 
+    const container = document.createElement('div');
+    container.className = 'column-container';
+    dashboard.appendChild(container);
+
     this.columns = [];
     for (let i = 0; i < this.layout.columns; i++) {
       const col = document.createElement('div');
@@ -162,9 +166,18 @@ const WidgetManager = {
           <span>ウィジェットを追加</span>
         </div>
       `;
-      dashboard.appendChild(col);
+      container.appendChild(col);
       this.columns.push(col);
     }
+
+    // クレジット表示（再生成）
+    let attribution = document.getElementById('bg-attribution');
+    if (!attribution) {
+      attribution = document.createElement('div');
+      attribution.className = 'app-bg-attribution';
+      attribution.id = 'bg-attribution';
+    }
+    dashboard.appendChild(attribution);
   },
 
   _loadWidgets() {
@@ -520,25 +533,62 @@ const WidgetManager = {
 
     if (bgConfig.type === 'custom' && bgConfig.url) {
       bg.style.backgroundImage = `url("${bgConfig.url}")`;
-    } else if (bgConfig.type === 'auto') {
+    } else if (bgConfig.type === 'auto' || bgConfig.type === 'nasa') {
       try {
-        const cached = await Storage.get('bg_cache', null);
+        const cacheKey = `bg_cache_${bgConfig.type}`;
+        const cached = await Storage.get(cacheKey, null);
         const now = Date.now();
+
+        // キャッシュ有効期間: 1時間
         if (cached && cached.url && (now - cached.timestamp < 3600000)) {
           bg.style.backgroundImage = `url("${cached.url}")`;
         } else {
-          const res = await fetch('https://picsum.photos/1920/1080');
-          if (res.ok) {
-            const url = res.url;
+          let url = '';
+          if (bgConfig.type === 'nasa') {
+            const res = await fetch('https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY');
+            if (res.ok) {
+              const data = await res.json();
+              if (data.media_type === 'image') {
+                url = data.hdurl || data.url;
+              } else {
+                // 画像でない場合はUnsplash等にフォールバック（または前日の画像等）
+                url = 'https://picsum.photos/1920/1080';
+              }
+            }
+          } else {
+            const res = await fetch('https://picsum.photos/1920/1080');
+            if (res.ok) url = res.url;
+          }
+
+          if (url) {
             bg.style.backgroundImage = `url("${url}")`;
-            await Storage.set('bg_cache', { url, timestamp: now });
+            await Storage.set(cacheKey, { url, timestamp: now });
+          }
+        }
+
+        // クレジット表示の更新
+        const attribution = document.getElementById('bg-attribution');
+        if (attribution) {
+          if (bgConfig.type === 'nasa') {
+            attribution.innerHTML = 'Background: <a href="https://apod.nasa.gov/" target="_blank">NASA APOD</a>';
+            attribution.style.opacity = '1';
+          } else if (bgConfig.type === 'auto') {
+            attribution.innerHTML = 'Background: <a href="https://unsplash.com/" target="_blank">Unsplash</a>';
+            attribution.style.opacity = '1';
+          } else {
+            attribution.style.opacity = '0';
           }
         }
       } catch (e) {
         console.warn('Background fetch failed:', e);
       }
-    } else if (bgConfig.type === 'solid' && bgConfig.color) {
-      document.body.style.backgroundColor = bgConfig.color;
+    } else if (bgConfig.type === 'solid' || bgConfig.type === 'custom' || bgConfig.type === 'none') {
+      const attribution = document.getElementById('bg-attribution');
+      if (attribution) attribution.style.opacity = '0';
+
+      if (bgConfig.type === 'solid' && bgConfig.color) {
+        document.body.style.backgroundColor = bgConfig.color;
+      }
     }
   },
 

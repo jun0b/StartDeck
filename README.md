@@ -50,6 +50,7 @@
 
 * **Weather Data:** [Open-Meteo](https://open-meteo.com/) (APIキー不要のオープンソース天気API)
 * **Images:** [Unsplash](https://unsplash.com/) (フォトグラファーコミュニティ)
+* **Astronomy Data:** [NASA APOD API](https://api.nasa.gov/) (今日の天文写真の取得)
 * **Stock Data:** [Yahoo Finance API](https://finance.yahoo.com/) (株価およびチャート情報の取得)
 
 ※その他の外部データ（RSS等）は、Chrome拡張機能特有の仕組みを利用して安全にバックグラウンドから直接取得しています。

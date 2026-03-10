@@ -229,6 +229,37 @@ img {
   min-height: 100vh;
 }
 
+.app-bg-attribution {
+  align-self: flex-end;
+  margin-top: 24px;
+  margin-bottom: 12px;
+  margin-right: 16px;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.45);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: opacity 0.3s;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 4px 10px;
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+}
+
+.app-bg-attribution a {
+  color: inherit;
+  text-decoration: underline;
+  pointer-events: auto;
+  font-weight: 500;
+}
+
+.app-bg-attribution a:hover {
+  color: #fff;
+}
+
 /* ---------- Header ---------- */
 .app-header {
   display: flex;
@@ -485,13 +516,19 @@ input[type="file"]::file-selector-button:hover {
 /* ---------- Dashboard Container ---------- */
 .dashboard {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 20px 40px;
+  max-width: 1600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.column-container {
   display: grid;
   grid-template-columns: repeat(var(--column-count, 3), 1fr);
   gap: var(--column-gap);
-  padding: 16px 20px 40px;
   align-items: start;
-  max-width: 1600px;
-  margin: 0 auto;
   width: 100%;
 }
 

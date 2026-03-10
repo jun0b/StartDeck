@@ -152,7 +152,7 @@ const App = {
 
     const updateBgUI = (type) => {
       if (bgUrlGroup) bgUrlGroup.style.display = (type === 'custom') ? '' : 'none';
-      if (bgFileGroup) bgFileGroup.style.display = (type === 'custom' || type === 'auto') ? '' : 'none';
+      if (bgFileGroup) bgFileGroup.style.display = (type === 'custom') ? '' : 'none';
       if (bgColorGroup) bgColorGroup.style.display = (type === 'solid') ? '' : 'none';
     };
 
@@ -162,9 +162,9 @@ const App = {
       const url = bgUrlInput?.value || '';
       if (type === 'custom' && url) {
         await WidgetManager.setBackground('custom', url);
-      } else if (type === 'auto') {
+      } else if (type === 'auto' || type === 'nasa') {
         await Storage.remove('bg_cache');
-        await WidgetManager.setBackground('auto', '');
+        await WidgetManager.setBackground(type, '');
       } else if (type === 'solid') {
         const color = bgColorInput?.value || '#111114';
         await WidgetManager.setBackground('solid', '', color);
