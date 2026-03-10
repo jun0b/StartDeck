@@ -47,8 +47,12 @@ class RSSWidget extends WidgetBase {
     }).join('');
 
     return `
-      <div class="rss-tabs">
-        ${tabs}
+      <div class="tabs-scroll-container">
+        <button class="tabs-scroll-btn left"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <div class="rss-tabs">
+          ${tabs}
+        </div>
+        <button class="tabs-scroll-btn right"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
       </div>
       <div class="rss-article-list" id="rss-list-${this.id}">
         <div class="loading-spinner"></div>
@@ -62,10 +66,24 @@ class RSSWidget extends WidgetBase {
 
     this.element.querySelectorAll('.rss-tab').forEach(tab => {
       tab.addEventListener('click', () => {
-        this.config.activeTab = parseInt(tab.dataset.idx);
+        const targetIdx = parseInt(tab.dataset.idx);
+        if (this.config.activeTab === targetIdx) return;
+
+        this.element.querySelectorAll('.rss-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        this.config.activeTab = targetIdx;
         this._currentPage = 0;
         this.save();
-        this.updateBody();
+
+        const feed = (this.config.feeds || [])[targetIdx];
+        if (feed) {
+          const listEl = this.element.querySelector(`#rss-list-${this.id}`);
+          if (listEl) listEl.innerHTML = '<div class="loading-spinner"></div>';
+          const pagEl = this.element.querySelector(`#rss-pagination-${this.id}`);
+          if (pagEl) pagEl.innerHTML = '';
+          this._loadFeed(feed, targetIdx);
+        }
       });
     });
 

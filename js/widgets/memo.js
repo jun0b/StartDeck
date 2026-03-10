@@ -20,7 +20,11 @@ class MemoWidget extends WidgetBase {
     `).join('') + `<div class="memo-tab-add" title="新規メモ">+</div>`;
 
     return `
-      <div class="memo-tabs">${tabs}</div>
+      <div class="tabs-scroll-container">
+        <button class="tabs-scroll-btn left"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <div class="memo-tabs scrollable-tabs">${tabs}</div>
+        <button class="tabs-scroll-btn right"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>
       <textarea class="memo-editor" id="memo-editor-${this.id}" placeholder="ここにメモを入力...">${this._escapeHtml(memos[active]?.content || '')}</textarea>
     `;
   }
@@ -42,9 +46,22 @@ class MemoWidget extends WidgetBase {
 
     this.element.querySelectorAll('.memo-tab[data-idx]').forEach(tab => {
       tab.addEventListener('click', (e) => {
-        this.config.activeTab = parseInt(tab.dataset.idx);
+        const targetIdx = parseInt(tab.dataset.idx);
+        if (this.config.activeTab === targetIdx) return;
+
+        // タブの表示更新
+        this.element.querySelectorAll('.memo-tab[data-idx]').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        // 設定保存
+        this.config.activeTab = targetIdx;
         this.save();
-        this.updateBody();
+
+        // エディタの内容更新
+        const editor = this.element.querySelector(`#memo-editor-${this.id}`);
+        if (editor) {
+          editor.value = this.config.memos[targetIdx]?.content || '';
+        }
       });
 
       tab.addEventListener('dblclick', (e) => {

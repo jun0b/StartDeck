@@ -64,6 +64,50 @@ const App = {
         }
       }
     }, true);
+
+    // --- Tab Scroll Logic ---
+    document.addEventListener('mouseover', (e) => {
+      const container = e.target.closest('.tabs-scroll-container');
+      if (container) {
+        const tabs = container.querySelector('.rss-tabs, .bookmark-tabs, .memo-tabs');
+        if (tabs) {
+          const leftBtn = container.querySelector('.tabs-scroll-btn.left');
+          const rightBtn = container.querySelector('.tabs-scroll-btn.right');
+          const canScrollLeft = tabs.scrollLeft > 2;
+          const canScrollRight = tabs.scrollLeft + tabs.clientWidth < tabs.scrollWidth - 2;
+          if (leftBtn) leftBtn.classList.toggle('visible', canScrollLeft);
+          if (rightBtn) rightBtn.classList.toggle('visible', canScrollRight);
+        }
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.tabs-scroll-btn');
+      if (btn) {
+        const tabs = btn.parentElement.querySelector('.rss-tabs, .bookmark-tabs, .memo-tabs');
+        if (tabs) {
+          const amount = 150;
+          if (btn.classList.contains('left')) tabs.scrollBy({ left: -amount, behavior: 'smooth' });
+          if (btn.classList.contains('right')) tabs.scrollBy({ left: amount, behavior: 'smooth' });
+        }
+      }
+    });
+
+    document.addEventListener('scroll', (e) => {
+      if (e.target && e.target.classList) {
+        if (e.target.classList.contains('rss-tabs') || e.target.classList.contains('bookmark-tabs') || e.target.classList.contains('memo-tabs')) {
+          const container = e.target.closest('.tabs-scroll-container');
+          if (container) {
+            const leftBtn = container.querySelector('.tabs-scroll-btn.left');
+            const rightBtn = container.querySelector('.tabs-scroll-btn.right');
+            const canScrollLeft = e.target.scrollLeft > 2;
+            const canScrollRight = e.target.scrollLeft + e.target.clientWidth < e.target.scrollWidth - 2;
+            if (leftBtn) leftBtn.classList.toggle('visible', canScrollLeft);
+            if (rightBtn) rightBtn.classList.toggle('visible', canScrollRight);
+          }
+        }
+      }
+    }, true);
   },
 
   _initSettingsPanel() {

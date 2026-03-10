@@ -64,7 +64,11 @@ class BookmarkWidget extends WidgetBase {
 
     if (bookmarks.length === 0) {
       return `
-        <div class="bookmark-tabs">${tabsHtml}</div>
+        <div class="tabs-scroll-container">
+          <button class="tabs-scroll-btn left"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+          <div class="bookmark-tabs scrollable-tabs">${tabsHtml}</div>
+          <button class="tabs-scroll-btn right"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+        </div>
         <div class="empty-state" style="padding:20px">ブックマークがありません</div>
         ${addFooter}`;
     }
@@ -97,10 +101,52 @@ class BookmarkWidget extends WidgetBase {
       }).join("");
 
     return `
-      <div class="bookmark-tabs">${tabsHtml}</div>
-      <div class="bookmark-list ${mode === "icon" ? "bookmark-list--icon" : "bookmark-list--list"}">${itemsHtml}</div>
+      <div class="tabs-scroll-container">
+        <button class="tabs-scroll-btn left"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <div class="bookmark-tabs scrollable-tabs">${tabsHtml}</div>
+        <button class="tabs-scroll-btn right"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>
+      <div class="bookmark-list-container" id="bookmark-list-container-${this.id}">
+        ${this._renderBookmarkList(bookmarks)}
+      </div>
       ${addFooter}
     `;
+  }
+
+  _renderBookmarkList(bookmarks) {
+    const mode = this.config.displayMode || "icon";
+    if (bookmarks.length === 0) {
+      return `<div class="empty-state" style="padding:20px">ブックマークがありません</div>`;
+    }
+
+    const itemsHtml = bookmarks.map((b, i) => {
+        let favicon;
+        try {
+          const u = new URL(chrome.runtime.getURL("/_favicon/"));
+          u.searchParams.set("pageUrl", b.url);
+          u.searchParams.set("size", "64");
+          favicon = u.toString();
+        } catch {
+          favicon = "";
+        }
+
+        const fallback = b.name ? b.name[0] : '?';
+        const fallbackSvg = `data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><rect width=%2224%22 height=%2224%22 rx=%224%22 fill=%22%23444%22/><text x=%2212%22 y=%2216%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2212%22>${fallback}</text></svg>`;
+
+        if (mode === "icon") {
+          return `<a href="${this._escapeHtml(b.url)}" class="bookmark-item bookmark-item--icon" title="${this._escapeHtml(b.name)}" data-idx="${i}">
+          <img class="bookmark-item__favicon" src="${favicon}" alt="" loading="lazy" data-fallback="${fallbackSvg}">
+          <span class="bookmark-item__name">${this._escapeHtml(b.name)}</span>
+        </a>`;
+        } else {
+          return `<a href="${this._escapeHtml(b.url)}" class="bookmark-item" title="${this._escapeHtml(b.url)}" data-idx="${i}">
+          <img class="bookmark-item__favicon" src="${favicon}" alt="" loading="lazy" data-fallback="${fallbackSvg}">
+          <span class="bookmark-item__name">${this._escapeHtml(b.name)}</span>
+        </a>`;
+        }
+      }).join("");
+
+    return `<div class="bookmark-list ${mode === "icon" ? "bookmark-list--icon" : "bookmark-list--list"}">${itemsHtml}</div>`;
   }
 
   onMount() {
@@ -109,13 +155,39 @@ class BookmarkWidget extends WidgetBase {
     // Tab switching
     this.element.querySelectorAll(".bookmark-tab").forEach((tab) => {
       tab.addEventListener("click", () => {
-        this.config.activeGroupIndex = parseInt(tab.dataset.idx);
+        const targetIdx = parseInt(tab.dataset.idx);
+        if (this.config.activeGroupIndex === targetIdx) return;
+
+        // タブの表示更新
+        this.element.querySelectorAll('.bookmark-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        // 設定保存
+        this.config.activeGroupIndex = targetIdx;
         this.save();
-        this.updateBody();
+
+        // リストの更新
+        const listContainer = this.element.querySelector(`#bookmark-list-container-${this.id}`);
+        if (listContainer) {
+          const groups = this.config.groups || [];
+          const group = groups[targetIdx];
+          const bookmarks = group ? (group.bookmarks || []) : [];
+          listContainer.innerHTML = this._renderBookmarkList(bookmarks);
+          // イベントの再バインド
+          this._bindBookmarkItems();
+        }
       });
     });
 
-    // Bookmark item context menu
+    this._bindBookmarkItems();
+
+    this.element
+      .querySelector(".bookmark-add-btn")
+      ?.addEventListener("click", () => this._showAddBookmarkDialog());
+  }
+
+  _bindBookmarkItems() {
+    if (!this.element) return;
     this.element.querySelectorAll(".bookmark-item").forEach((item) => {
       item.addEventListener("contextmenu", (e) => {
         e.preventDefault();
@@ -124,10 +196,6 @@ class BookmarkWidget extends WidgetBase {
         this._showBookmarkMenu(e, idx);
       });
     });
-
-    this.element
-      .querySelector(".bookmark-add-btn")
-      ?.addEventListener("click", () => this._showAddBookmarkDialog());
   }
 
   getSettingsFields() {

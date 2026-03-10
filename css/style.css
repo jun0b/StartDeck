@@ -754,6 +754,62 @@ input[type="file"]::file-selector-button:hover {
   color: var(--text-secondary);
 }
 
+/* ---------- Scrollable Tabs Container ---------- */
+.tabs-scroll-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.tabs-scroll-container:hover .tabs-scroll-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.tabs-scroll-container .rss-tabs,
+.tabs-scroll-container .bookmark-tabs,
+.tabs-scroll-container .memo-tabs {
+  flex: 1;
+  scroll-behavior: smooth;
+}
+.tabs-scroll-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  background: var(--bg-widget-hover);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-color-hover);
+  color: var(--text-primary);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s ease;
+  pointer-events: none;
+  box-shadow: var(--shadow-md);
+}
+.tabs-scroll-btn:hover {
+  background: var(--accent-primary);
+  color: white;
+  border-color: transparent;
+  transform: translateY(-50%) scale(1.1);
+}
+.tabs-scroll-btn svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.tabs-scroll-btn.left { left: 4px; }
+.tabs-scroll-btn.right { right: 4px; }
+
+
 /* ---------- Widget-Specific: RSS ---------- */
 .rss-tabs,
 .bookmark-tabs {
