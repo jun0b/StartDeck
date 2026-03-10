@@ -54,13 +54,7 @@ class BookmarkWidget extends WidgetBase {
     const activeGroup = groups[activeIndex];
     const bookmarks = activeGroup ? (activeGroup.bookmarks || []) : [];
 
-    const addFooter = `
-      <div class="bookmark-footer">
-        <div class="bookmark-footer__add-btn bookmark-add-btn">
-          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          <span>ブックマーク追加</span>
-        </div>
-      </div>`;
+
 
     if (bookmarks.length === 0) {
       return `
@@ -69,8 +63,7 @@ class BookmarkWidget extends WidgetBase {
           <div class="bookmark-tabs scrollable-tabs">${tabsHtml}</div>
           <button class="tabs-scroll-btn right"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
         </div>
-        <div class="empty-state" style="padding:20px">ブックマークがありません</div>
-        ${addFooter}`;
+        <div class="empty-state" style="padding:20px">ブックマークがありません</div>`;
     }
 
     const itemsHtml = bookmarks.map((b, i) => {
@@ -109,7 +102,6 @@ class BookmarkWidget extends WidgetBase {
       <div class="bookmark-list-container" id="bookmark-list-container-${this.id}">
         ${this._renderBookmarkList(bookmarks)}
       </div>
-      ${addFooter}
     `;
   }
 
@@ -181,9 +173,7 @@ class BookmarkWidget extends WidgetBase {
 
     this._bindBookmarkItems();
 
-    this.element
-      .querySelector(".bookmark-add-btn")
-      ?.addEventListener("click", () => this._showAddBookmarkDialog());
+
   }
 
   _bindBookmarkItems() {
