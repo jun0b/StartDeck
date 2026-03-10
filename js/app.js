@@ -44,6 +44,20 @@ const App = {
         document.querySelector('.settings-panel')?.classList.remove('open');
       }
     });
+
+    document.addEventListener('error', (e) => {
+      const target = e.target;
+      if (target.tagName?.toLowerCase() === 'img') {
+        if (target.hasAttribute('data-fallback')) {
+          const fallback = target.getAttribute('data-fallback');
+          if (target.src !== fallback) {
+            target.src = fallback;
+          }
+        } else if (target.hasAttribute('data-hide-on-error')) {
+          target.style.display = 'none';
+        }
+      }
+    }, true);
   },
 
   _initSettingsPanel() {

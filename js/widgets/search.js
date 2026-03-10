@@ -42,7 +42,7 @@ const SearchManager = {
       <div class="search-bar-wrapper">
         <div class="search-bar">
           <div class="search-bar__engine-btn" id="search-engine-toggle">
-            <img class="search-bar__engine-icon" src="${this.currentEngine.icon}" alt="" onerror="this.style.display='none'">
+            <img class="search-bar__engine-icon" src="${this.currentEngine.icon}" alt="" data-hide-on-error="true">
             <span class="search-bar__engine-name">${this.currentEngine.name}</span>
           </div>
           <div class="search-bar__separator"></div>
@@ -90,7 +90,7 @@ const SearchManager = {
 
     dropdown.innerHTML = this.engines.map(e => `
       <div class="search-engine-dropdown__item ${e.id === this.currentEngine.id ? 'active' : ''}" data-engine-id="${e.id}">
-        <img src="${e.icon}" alt="" width="18" height="18" onerror="this.style.display='none'">
+        <img src="${e.icon}" alt="" width="18" height="18" data-hide-on-error="true">
         <span>${e.name}</span>
       </div>
     `).join('') + `
@@ -139,7 +139,7 @@ const SearchManager = {
             ${this.engines.map((e, i) => `
               <div class="draggable-item" draggable="true" data-idx="${i}" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border-color);cursor:grab">
                 <span style="font-size:0.8rem;color:var(--text-tertiary)">≡</span>
-                <img src="${e.icon}" width="16" height="16" onerror="this.style.display='none'">
+                <img src="${e.icon}" width="16" height="16" data-hide-on-error="true">
                 <span style="flex:1;font-size:0.85rem">${this._escapeHtml(e.name)}</span>
                 <button class="btn btn--ghost" style="padding:2px 8px;font-size:0.72rem" data-action="edit" data-idx="${i}">編集</button>
                 <button class="btn btn--danger" style="padding:2px 8px;font-size:0.72rem" data-remove="${i}" ${this.engines.length <= 1 ? 'disabled' : ''}>削除</button>

@@ -39,7 +39,7 @@ class RSSWidget extends WidgetBase {
       u.searchParams.set("pageUrl", f.url);
       u.searchParams.set("size", "32");
       return `<div class="rss-tab ${i === active ? 'active' : ''}" data-idx="${i}">
-        <img class="rss-tab__icon" src="${u.toString()}" alt="" onerror="this.style.display='none'">
+        <img class="rss-tab__icon" src="${u.toString()}" alt="" data-hide-on-error="true">
         <span>${this._escapeHtml(f.name)}</span>
       </div>`;
     }).join('');
@@ -145,7 +145,7 @@ class RSSWidget extends WidgetBase {
       const timeAgo = a.pubDate ? this._timeAgo(new Date(a.pubDate)) : '';
       return `
         <a href="${this._escapeHtml(a.link)}" class="rss-article" target="_blank" rel="noopener">
-          ${showThumb && a.thumb ? `<img class="rss-article__thumb" src="${this._escapeHtml(a.thumb)}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
+          ${showThumb && a.thumb ? `<img class="rss-article__thumb" src="${this._escapeHtml(a.thumb)}" alt="" loading="lazy" data-hide-on-error="true">` : ''}
           <div class="rss-article__content">
             <div class="rss-article__title">${this._escapeHtml(a.title)}</div>
             <div class="rss-article__summary">

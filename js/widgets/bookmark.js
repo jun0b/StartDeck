@@ -41,12 +41,12 @@ class BookmarkWidget extends WidgetBase {
         }
         if (mode === "icon") {
           return `<a href="${this._escapeHtml(b.url)}" class="bookmark-item bookmark-item--icon" title="${this._escapeHtml(b.name)}" data-idx="${i}">
-          <img class="bookmark-item__favicon" src="${favicon}" alt="" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><rect width=%2224%22 height=%2224%22 rx=%224%22 fill=%22%23444%22/><text x=%2212%22 y=%2216%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2212%22>${b.name[0]}</text></svg>'">
+          <img class="bookmark-item__favicon" src="${favicon}" alt="" loading="lazy" data-fallback="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><rect width=%2224%22 height=%2224%22 rx=%224%22 fill=%22%23444%22/><text x=%2212%22 y=%2216%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2212%22>${b.name ? b.name[0] : '?'}</text></svg>">
           <span class="bookmark-item__name">${this._escapeHtml(b.name)}</span>
         </a>`;
         } else {
           return `<a href="${this._escapeHtml(b.url)}" class="bookmark-item" title="${this._escapeHtml(b.url)}" data-idx="${i}">
-          <img class="bookmark-item__favicon" src="${favicon}" alt="" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><rect width=%2224%22 height=%2224%22 rx=%224%22 fill=%22%23444%22/><text x=%2212%22 y=%2216%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2212%22>${b.name[0]}</text></svg>'">
+          <img class="bookmark-item__favicon" src="${favicon}" alt="" loading="lazy" data-fallback="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><rect width=%2224%22 height=%2224%22 rx=%224%22 fill=%22%23444%22/><text x=%2212%22 y=%2216%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2212%22>${b.name ? b.name[0] : '?'}</text></svg>">
           <span class="bookmark-item__name">${this._escapeHtml(b.name)}</span>
         </a>`;
         }

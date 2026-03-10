@@ -105,7 +105,7 @@ class MediaWidget extends WidgetBase {
 
     body.innerHTML = `
       <div class="media-widget__player">
-        ${d.artwork ? `<img class="media-widget__artwork media-widget__goto-tab" src="${this._escapeHtml(d.artwork)}" alt="" loading="lazy" onerror="this.style.display='none'" title="タブに移動" style="cursor:pointer">` : ''}
+        ${d.artwork ? `<img class="media-widget__artwork media-widget__goto-tab" src="${this._escapeHtml(d.artwork)}" alt="" loading="lazy" data-hide-on-error="true" title="タブに移動" style="cursor:pointer">` : ''}
         <div class="media-widget__info">
           <div class="media-widget__title media-widget__goto-tab" style="cursor:pointer" title="タブに移動">${this._escapeHtml(d.title || '不明な曲')}</div>
           ${d.artist ? `<div class="media-widget__artist">${this._escapeHtml(d.artist)}</div>` : ''}
