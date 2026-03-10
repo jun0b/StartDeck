@@ -180,6 +180,11 @@ select {
   color: var(--text-primary);
 }
 
+select option {
+  background: #2a2a30;
+  color: #ffffff;
+}
+
 ul,
 ol {
   list-style: none;
@@ -1496,7 +1501,7 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .form-select option {
-  background: var(--bg-primary);
+  background: #2a2a30;
   color: var(--text-primary);
 }
 

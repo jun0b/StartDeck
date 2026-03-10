@@ -204,12 +204,11 @@ class BookmarkWidget extends WidgetBase {
   }
 
   _showEditBookmarkDialog(idx) {
-    const { group } = this._getActiveGroup();
-    if (!group) return;
-    const bms = group.bookmarks || [];
+    const { group: activeGroup, index: activeGroupIdx, groups } = this._getActiveGroup();
+    if (!groups || groups.length === 0) return;
 
     const isEdit = idx >= 0;
-    const bm = isEdit ? bms[idx] : { name: "", url: "" };
+    const bm = isEdit ? activeGroup.bookmarks[idx] : { name: "", url: "" };
 
     const overlay = document.createElement("div");
     overlay.className = "modal-overlay";
@@ -219,6 +218,17 @@ class BookmarkWidget extends WidgetBase {
         <div class="modal__body">
           <div class="form-group"><label class="form-label">名前</label><input class="form-input" id="bm-name" value="${this._escapeHtml(bm.name)}" placeholder="例: YouTube"></div>
           <div class="form-group"><label class="form-label">URL</label><input class="form-input" id="bm-url" value="${this._escapeHtml(bm.url)}" placeholder="https://..."></div>
+          <div class="form-group">
+            <label class="form-label">保存先グループ</label>
+            <select class="form-select" id="bm-group">
+              ${groups.map((g, i) => `<option value="${i}" ${i === activeGroupIdx ? 'selected' : ''}>${this._escapeHtml(g.name)}</option>`).join('')}
+              <option value="new">+ 新しいグループを作成</option>
+            </select>
+          </div>
+          <div class="form-group" id="bm-new-group-container" style="display: none;">
+            <label class="form-label">新しいグループ名</label>
+            <input class="form-input" id="bm-new-group-name" placeholder="例: お気に入り">
+          </div>
         </div>
         <div class="modal__footer"><button class="btn btn--ghost modal-cancel">キャンセル</button><button class="btn btn--primary modal-save">保存</button></div>
       </div>
@@ -229,16 +239,47 @@ class BookmarkWidget extends WidgetBase {
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay) close();
     });
+
+    const groupSelect = overlay.querySelector("#bm-group");
+    const newGroupContainer = overlay.querySelector("#bm-new-group-container");
+    groupSelect.addEventListener("change", () => {
+      if (groupSelect.value === "new") {
+        newGroupContainer.style.display = "block";
+        overlay.querySelector("#bm-new-group-name").focus();
+      } else {
+        newGroupContainer.style.display = "none";
+      }
+    });
+
     overlay.querySelector(".modal-save").addEventListener("click", () => {
       const name = overlay.querySelector("#bm-name").value.trim();
       const url = overlay.querySelector("#bm-url").value.trim();
       if (!name || !url) return;
-      if (isEdit) {
-        bms[idx] = { name, url };
+
+      let targetGroupIdx;
+      if (groupSelect.value === "new") {
+        const newGroupName = overlay.querySelector("#bm-new-group-name").value.trim();
+        if (!newGroupName) return;
+        this.config.groups.push({ name: newGroupName, bookmarks: [] });
+        targetGroupIdx = this.config.groups.length - 1;
       } else {
-        if (!group.bookmarks) group.bookmarks = [];
-        group.bookmarks.push({ name, url });
+        targetGroupIdx = parseInt(groupSelect.value);
       }
+
+      if (isEdit) {
+        if (targetGroupIdx !== activeGroupIdx) {
+          activeGroup.bookmarks.splice(idx, 1);
+          if (!this.config.groups[targetGroupIdx].bookmarks) this.config.groups[targetGroupIdx].bookmarks = [];
+          this.config.groups[targetGroupIdx].bookmarks.push({ name, url });
+        } else {
+          activeGroup.bookmarks[idx] = { name, url };
+        }
+      } else {
+        if (!this.config.groups[targetGroupIdx].bookmarks) this.config.groups[targetGroupIdx].bookmarks = [];
+        this.config.groups[targetGroupIdx].bookmarks.push({ name, url });
+      }
+
+      this.config.activeGroupIndex = targetGroupIdx;
       this.save();
       this.updateBody();
       close();

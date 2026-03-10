@@ -44,10 +44,10 @@ class CalendarWidget extends WidgetBase {
       const cal = this.config.calendars[ci];
       try {
         const res = await new Promise((resolve) => {
-          if (chrome?.runtime?.sendMessage) {
+          if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
             chrome.runtime.sendMessage({ action: 'proxyFetch', url: cal.url }, resolve);
           } else {
-            fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(cal.url)}`)
+            fetch(cal.url)
               .then(r => r.text())
               .then(text => resolve({ ok: true, data: text }))
               .catch(err => resolve({ ok: false, error: err.message }));

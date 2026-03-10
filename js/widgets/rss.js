@@ -35,8 +35,10 @@ class RSSWidget extends WidgetBase {
 
     const active = Math.min(this.config.activeTab || 0, feeds.length - 1);
     const tabs = feeds.map((f, i) => {
+      let pageUrl = f.url;
+      try { pageUrl = new URL(f.url).origin; } catch {}
       const u = new URL(chrome.runtime.getURL("/_favicon/"));
-      u.searchParams.set("pageUrl", f.url);
+      u.searchParams.set("pageUrl", pageUrl);
       u.searchParams.set("size", "32");
       return `<div class="rss-tab ${i === active ? 'active' : ''}" data-idx="${i}">
         <img class="rss-tab__icon" src="${u.toString()}" alt="" data-hide-on-error="true">
@@ -98,8 +100,7 @@ class RSSWidget extends WidgetBase {
         }
       } else {
         // フォールバック: 直接fetch（file://で開いた場合等）
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(feed.url)}`;
-        const res = await fetch(proxyUrl);
+        const res = await fetch(feed.url);
         text = await res.text();
       }
       const parser = new DOMParser();

@@ -66,6 +66,7 @@ class WeatherWidget extends WidgetBase {
           </div>
         </div>
         <div class="weather-forecast">${forecastHtml}</div>
+        <div style="text-align: right; padding-top: 6px; font-size: 0.65rem; color: var(--text-tertiary);">Powered by Open-Meteo</div>
       `;
     } catch (e) {
       body.innerHTML = `<div class="empty-state">天気情報を取得できませんでした<br><span style="font-size:0.72rem;color:var(--text-tertiary)">設定から都市を確認してください</span></div>`;

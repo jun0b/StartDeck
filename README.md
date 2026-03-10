@@ -49,10 +49,11 @@
 各機能で利用している外部サービスに深く敬意を表します。
 
 * **Weather Data:** [Open-Meteo](https://open-meteo.com/) (APIキー不要のオープンソース天気API)
-* **Images:** [Lorem Picsum](https://picsum.photos/) (ランダムな背景画像提供サービス)
+* **Images:** [Unsplash](https://unsplash.com/) (フォトグラファーコミュニティ)
 * **Stock Data:** [Yahoo Finance API](https://finance.yahoo.com/) (株価およびチャート情報の取得)
-* **Favicons:** Google S2 Favicons (各ウェブサイトのアイコン取得)
-* **CORS Proxy:** [AllOrigins](https://github.com/gnuns/allOrigins) (RSSやカレンダーなどの外部データ取得用プロキシAPI)
+
+※その他の外部データ（RSS等）は、Chrome拡張機能特有の仕組みを利用して安全にバックグラウンドから直接取得しています。
+
 ---
 
 ## ⚠️ 免責事項

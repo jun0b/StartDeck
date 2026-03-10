@@ -47,7 +47,7 @@ class StockWidget extends WidgetBase {
           if (!res || !res.ok) throw new Error(res?.error || 'Fetch failed');
           return JSON.parse(res.data);
         } else {
-          const res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
+          const res = await fetch(url);
           return await res.json();
         }
       };
@@ -114,7 +114,7 @@ class StockWidget extends WidgetBase {
               <div class="stock-item__change ${changeDir}">${arrow} ${Math.abs(change).toFixed(2)} (${Math.abs(changePercent).toFixed(2)}%)</div>
             </div>
           </a>`;
-      }).join('');
+      }).join('') + '<div style="text-align: right; padding: 6px 8px 0; font-size: 0.65rem; color: var(--text-tertiary);">Powered by Yahoo Finance</div>';
     } catch (e) {
       listEl.innerHTML = `<div class="empty-state">株価を取得できませんでした<br><span style="font-size:0.72rem;color:var(--text-tertiary)">${this._escapeHtml(e.message)}</span></div>`;
     }
