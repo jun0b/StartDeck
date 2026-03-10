@@ -2,6 +2,22 @@
  * Background Service Worker - メディアタブ検出・制御
  */
 
+// コンテキストメニューの初期化
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.contextMenus.create({
+    id: "open-options",
+    title: "オプション",
+    contexts: ["action"]
+  });
+});
+
+// コンテキストメニューのクリックハンドラ
+chrome.contextMenus.onClicked.addListener((info) => {
+  if (info.menuItemId === "open-options") {
+    chrome.tabs.create({ url: "chrome://extensions/?id=" + chrome.runtime.id });
+  }
+});
+
 // メディア関連のURLパターン
 const MEDIA_URL_PATTERNS = [
   '*://www.youtube.com/watch*',
