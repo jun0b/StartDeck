@@ -35,9 +35,11 @@ class RSSWidget extends WidgetBase {
 
     const active = Math.min(this.config.activeTab || 0, feeds.length - 1);
     const tabs = feeds.map((f, i) => {
-      const domain = this._getDomain(f.url);
+      const u = new URL(chrome.runtime.getURL("/_favicon/"));
+      u.searchParams.set("pageUrl", f.url);
+      u.searchParams.set("size", "32");
       return `<div class="rss-tab ${i === active ? 'active' : ''}" data-idx="${i}">
-        <img class="rss-tab__icon" src="https://www.google.com/s2/favicons?domain=${domain}&sz=32" alt="" onerror="this.style.display='none'">
+        <img class="rss-tab__icon" src="${u.toString()}" alt="" onerror="this.style.display='none'">
         <span>${this._escapeHtml(f.name)}</span>
       </div>`;
     }).join('');

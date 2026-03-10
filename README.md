@@ -52,7 +52,7 @@
 * **Images:** [Lorem Picsum](https://picsum.photos/) (ランダムな背景画像提供サービス)
 * **Stock Data:** [Yahoo Finance API](https://finance.yahoo.com/) (株価およびチャート情報の取得)
 * **Favicons:** Google S2 Favicons (各ウェブサイトのアイコン取得)
-* **CORS Proxy:** [AllOrigins](https://allorigins.win/) (RSSやカレンダーなどの外部データ取得用プロキシAPI)
+* **CORS Proxy:** [AllOrigins](https://github.com/gnuns/allOrigins) (RSSやカレンダーなどの外部データ取得用プロキシAPI)
 ---
 
 ## ⚠️ 免責事項

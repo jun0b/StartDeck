@@ -28,9 +28,9 @@ const SearchManager = {
 
   _defaultEngines() {
     return [
-      { id: 'bing', name: 'Bing', url: 'https://www.bing.com/search?q=%s', icon: 'https://www.google.com/s2/favicons?domain=bing.com&sz=32' },
-      { id: 'google', name: 'Google', url: 'https://www.google.com/search?q=%s', icon: 'https://www.google.com/s2/favicons?domain=google.com&sz=32' },
-      { id: 'duckduckgo', name: 'DuckDuckGo', url: 'https://duckduckgo.com/?q=%s', icon: 'https://www.google.com/s2/favicons?domain=duckduckgo.com&sz=32' }
+      { id: 'bing', name: 'Bing', url: 'https://www.bing.com/search?q=%s', icon: chrome.runtime.getURL('/_favicon/?pageUrl=https://www.bing.com&size=32') },
+      { id: 'google', name: 'Google', url: 'https://www.google.com/search?q=%s', icon: chrome.runtime.getURL('/_favicon/?pageUrl=https://www.google.com&size=32') },
+      { id: 'duckduckgo', name: 'DuckDuckGo', url: 'https://duckduckgo.com/?q=%s', icon: chrome.runtime.getURL('/_favicon/?pageUrl=https://duckduckgo.com&size=32') }
     ];
   },
 
@@ -247,8 +247,11 @@ const SearchManager = {
         return;
       }
 
-      const domain = new URL(url).hostname;
-      const icon = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+      const origin = new URL(url).origin;
+      const u = new URL(chrome.runtime.getURL("/_favicon/"));
+      u.searchParams.set("pageUrl", origin);
+      u.searchParams.set("size", "32");
+      const icon = u.toString();
 
       if (isEdit) {
         this.engines[editIdx] = { ...this.engines[editIdx], name, url, icon };

@@ -6,7 +6,7 @@
   "chrome_url_overrides": {
     "newtab": "newtab.html"
   },
-  "permissions": ["storage", "tabs", "scripting"],
+  "permissions": ["storage", "tabs", "scripting", "favicon"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js"
