@@ -29,7 +29,7 @@ class WeatherWidget extends WidgetBase {
       const unit = this.config.unit === 'fahrenheit' ? 'fahrenheit' : 'celsius';
       const tempUnit = unit === 'celsius' ? '°C' : '°F';
 
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&temperature_unit=${unit}&timezone=auto&forecast_days=5`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&temperature_unit=${unit}&timezone=auto&forecast_days=5`;
       const res = await fetch(url);
       const data = await res.json();
 
@@ -57,7 +57,7 @@ class WeatherWidget extends WidgetBase {
       }).join('');
 
       body.innerHTML = `
-        <div class="weather-current">
+        <div class="weather-current" id="weather-current-${this.id}">
           <div class="weather-current__icon">${weatherIcon}</div>
           <div>
             <div class="weather-current__temp">${Math.round(current.temperature_2m)}${tempUnit}</div>
@@ -68,9 +68,84 @@ class WeatherWidget extends WidgetBase {
         <div class="weather-forecast">${forecastHtml}</div>
         <div style="text-align: right; padding-top: 6px; font-size: 0.65rem; color: var(--text-tertiary);">Powered by Open-Meteo</div>
       `;
+
+      this._bindHovers(data);
     } catch (e) {
       body.innerHTML = `<div class="empty-state">天気情報を取得できませんでした<br><span style="font-size:0.72rem;color:var(--text-tertiary)">設定から都市を確認してください</span></div>`;
     }
+  }
+
+  _bindHovers(data) {
+    const current = this.element?.querySelector(`#weather-current-${this.id}`);
+    if (!current) return;
+
+    let timer;
+    current.addEventListener('mouseenter', () => {
+      timer = setTimeout(() => {
+        this._showPopup(current, data);
+      }, 400);
+    });
+    current.addEventListener('mouseleave', () => {
+      clearTimeout(timer);
+      this._hidePopup();
+    });
+  }
+
+  _showPopup(targetEl, data) {
+    let popup = document.querySelector('.widget-popup');
+    if (!popup) {
+      popup = document.createElement('div');
+      popup.className = 'widget-popup';
+      document.body.appendChild(popup);
+    }
+
+    const hourly = data.hourly;
+    // 現在時刻より少し前の正時から13件取得（現在時刻＋12時間分をカバー）
+    const now = new Date();
+    const currentHourIdx = hourly.time.findIndex(t => new Date(t) > now) - 1;
+    const startIndex = Math.max(0, currentHourIdx);
+    const nextHours = hourly.time.slice(startIndex, startIndex + 12);
+    const unit = this.config.unit === 'fahrenheit' ? '°F' : '°C';
+
+    const hourlyHtml = nextHours.map((time, i) => {
+      const idx = startIndex + i;
+      const t = new Date(time);
+      const timeStr = `${t.getHours()}:00`;
+      const temp = Math.round(hourly.temperature_2m[idx]);
+      const icon = this._weatherCodeToIcon(hourly.weather_code[idx]);
+      return `
+        <div class="weather-popup-hour">
+          <span class="weather-popup-hour__time">${timeStr}</span>
+          <div class="weather-popup-hour__icon">${icon}</div>
+          <span class="weather-popup-hour__temp">${temp}${unit}</span>
+        </div>
+      `;
+    }).join('');
+
+    popup.innerHTML = `
+      <div class="widget-popup__title">${this._escapeHtml(this.config.locationName)} の時間別予報</div>
+      <div class="widget-popup__body">
+        <div class="weather-popup-hourly">
+          ${hourlyHtml}
+        </div>
+      </div>
+    `;
+
+    const rect = targetEl.getBoundingClientRect();
+    let left = rect.right + 10;
+    let top = rect.top;
+    if (left + 250 > window.innerWidth) left = rect.left - 260;
+    if (top + 350 > window.innerHeight) top = window.innerHeight - 360;
+
+    popup.style.left = `${left + window.scrollX}px`;
+    popup.style.top = `${top + window.scrollY}px`;
+    popup.style.width = '250px';
+    popup.classList.add('visible');
+  }
+
+  _hidePopup() {
+    const popup = document.querySelector('.widget-popup');
+    if (popup) popup.classList.remove('visible');
   }
 
   _weatherCodeToDesc(code) {

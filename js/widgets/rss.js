@@ -139,7 +139,15 @@ class RSSWidget extends WidgetBase {
           if (imgMatch) thumb = imgMatch[1];
         }
 
-        articles.push({ title, link, desc: this._stripHtml(desc).substring(0, 200), pubDate, thumb });
+        const fullDesc = this._stripHtml(desc);
+        articles.push({
+          title,
+          link,
+          desc: fullDesc.substring(0, 200),
+          fullDesc: fullDesc,
+          pubDate,
+          thumb
+        });
       });
 
       this._articles[idx] = articles;
@@ -160,10 +168,11 @@ class RSSWidget extends WidgetBase {
     const pageArticles = articles.slice(start, start + perPage);
     const showThumb = this.config.showThumbnail;
 
-    listEl.innerHTML = pageArticles.map(a => {
+    listEl.innerHTML = pageArticles.map((a, i) => {
       const timeAgo = a.pubDate ? this._timeAgo(new Date(a.pubDate)) : '';
+      const articleIdx = start + i;
       return `
-        <a href="${this._escapeHtml(a.link)}" class="rss-article" target="_blank" rel="noopener">
+        <a href="${this._escapeHtml(a.link)}" class="rss-article" target="_blank" rel="noopener" data-idx="${articleIdx}">
           ${showThumb && a.thumb ? `<img class="rss-article__thumb" src="${this._escapeHtml(a.thumb)}" alt="" loading="lazy" data-hide-on-error="true">` : ''}
           <div class="rss-article__content">
             <div class="rss-article__title">${this._escapeHtml(a.title)}</div>
@@ -174,6 +183,8 @@ class RSSWidget extends WidgetBase {
           </div>
         </a>`;
     }).join('') || '<div class="empty-state">記事がありません</div>';
+
+    this._bindArticleHovers(listEl);
 
     const pagEl = this.element?.querySelector(`#rss-pagination-${this.id}`);
     if (pagEl && totalPages > 1) {
@@ -204,6 +215,84 @@ class RSSWidget extends WidgetBase {
     if (diff < 3600) return `${Math.floor(diff / 60)}分前`;
     if (diff < 86400) return `${Math.floor(diff / 3600)}時間前`;
     return `${Math.floor(diff / 86400)}日前`;
+  }
+
+  _bindArticleHovers(listEl) {
+    const articles = listEl.querySelectorAll('.rss-article');
+    const tabIdx = this.config.activeTab || 0;
+    const allArticles = this._articles[tabIdx] || [];
+
+    articles.forEach(el => {
+      let timer;
+      el.addEventListener('mouseenter', (e) => {
+        timer = setTimeout(() => {
+          const idx = parseInt(el.dataset.idx);
+          const data = allArticles[idx];
+          if (data) this._showPopup(el, data);
+        }, 400); // 400msホバーで表示
+      });
+
+      el.addEventListener('mouseleave', () => {
+        clearTimeout(timer);
+        this._hidePopup();
+      });
+    });
+  }
+
+  _showPopup(targetEl, data) {
+    let popup = document.querySelector('.widget-popup');
+    if (!popup) {
+      popup = document.createElement('div');
+      popup.className = 'widget-popup';
+      document.body.appendChild(popup);
+    }
+
+    popup.innerHTML = `
+      <div class="widget-popup__title">${this._escapeHtml(data.title)}</div>
+      <div class="widget-popup__body">${this._escapeHtml(data.fullDesc || data.desc)}</div>
+      <div class="widget-popup__footer">
+        <a href="${this._escapeHtml(data.link)}" class="widget-popup__link" target="_blank" rel="noopener">
+          元の記事を読む
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+      </div>
+    `;
+
+    const rect = targetEl.getBoundingClientRect();
+    const popupWidth = 380;
+
+    // 表示位置の計算
+    let left = rect.right + 10;
+    let top = rect.top;
+
+    // 右側にスペースがない場合は左側に表示
+    if (left + popupWidth > window.innerWidth) {
+      left = rect.left - popupWidth - 10;
+    }
+
+    // 上下の調整
+    if (top + 300 > window.innerHeight) {
+      top = window.innerHeight - 320;
+    }
+
+    popup.style.left = `${left + window.scrollX}px`;
+    popup.style.top = `${top + window.scrollY}px`;
+    popup.classList.add('visible');
+
+    // ポップアップ自体にマウスが乗っている間は消さない
+    popup.onmouseenter = () => {
+      popup.classList.add('visible');
+    };
+    popup.onmouseleave = () => {
+      this._hidePopup();
+    };
+  }
+
+  _hidePopup() {
+    const popup = document.querySelector('.widget-popup');
+    if (popup) {
+      popup.classList.remove('visible');
+    }
   }
 
   _getDomain(url) {

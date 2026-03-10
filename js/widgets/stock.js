@@ -54,7 +54,8 @@ class StockWidget extends WidgetBase {
 
       const quotes = await Promise.all(symbols.map(async (sym) => {
         try {
-          const chartData = await fetchUrl(`https://query2.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1d`);
+          // intervalを5mに変更して、1日の間に複数のデータポイントを取得できるようにする
+          const chartData = await fetchUrl(`https://query2.finance.yahoo.com/v8/finance/chart/${sym}?interval=5m&range=1d`);
           const meta = chartData?.chart?.result?.[0]?.meta;
           if (!meta) return null;
 
@@ -76,7 +77,11 @@ class StockWidget extends WidgetBase {
             name: name,
             price: meta.regularMarketPrice || 0,
             prevClose: meta.chartPreviousClose || meta.previousClose || meta.regularMarketPrice || 0,
-            currency: meta.currency || ''
+            high: meta.regularMarketDayHigh || 0,
+            low: meta.regularMarketDayLow || 0,
+            volume: meta.regularMarketVolume || 0,
+            currency: meta.currency || '',
+            history: chartData?.chart?.result?.[0]?.indicators?.quote?.[0]?.close || []
           };
         } catch (e) {
           console.error('Failed to fetch stock:', sym, e);
@@ -104,7 +109,7 @@ class StockWidget extends WidgetBase {
           : `https://finance.yahoo.com/quote/${encodeURIComponent(q.symbol)}`;
 
         return `
-          <a href="${stockUrl}" target="_blank" class="stock-item">
+          <a href="${stockUrl}" target="_blank" class="stock-item" data-idx="${validQuotes.indexOf(q)}">
             <div>
               <div class="stock-item__symbol">${this._escapeHtml(q.symbol)}</div>
               <div class="stock-item__name">${this._escapeHtml(q.name)}</div>
@@ -115,9 +120,122 @@ class StockWidget extends WidgetBase {
             </div>
           </a>`;
       }).join('') + '<div style="text-align: right; padding: 6px 8px 0; font-size: 0.65rem; color: var(--text-tertiary);">Powered by Yahoo Finance</div>';
+
+      this._bindHovers(listEl, validQuotes);
     } catch (e) {
       listEl.innerHTML = `<div class="empty-state">株価を取得できませんでした<br><span style="font-size:0.72rem;color:var(--text-tertiary)">${this._escapeHtml(e.message)}</span></div>`;
     }
+  }
+
+  _bindHovers(listEl, quotes) {
+    const items = listEl.querySelectorAll('.stock-item');
+    items.forEach(el => {
+      let timer;
+      el.addEventListener('mouseenter', () => {
+        timer = setTimeout(() => {
+          const idx = parseInt(el.dataset.idx);
+          const data = quotes[idx];
+          if (data) this._showPopup(el, data);
+        }, 400);
+      });
+      el.addEventListener('mouseleave', () => {
+        clearTimeout(timer);
+        this._hidePopup();
+      });
+    });
+  }
+
+  _showPopup(targetEl, data) {
+    let popup = document.querySelector('.widget-popup');
+    if (!popup) {
+      popup = document.createElement('div');
+      popup.className = 'widget-popup';
+      document.body.appendChild(popup);
+    }
+
+    const formatVol = (v) => {
+      if (v >= 1000000) return (v / 1000000).toFixed(2) + 'M';
+      if (v >= 1000) return (v / 1000).toFixed(2) + 'K';
+      return v;
+    };
+
+    popup.innerHTML = `
+      <div class="widget-popup__title">${this._escapeHtml(data.name)} (${this._escapeHtml(data.symbol)})</div>
+      <div class="widget-popup__body">
+        <div class="stock-popup-chart" id="stock-chart-${this.id}">
+          ${this._renderMiniChart(data)}
+        </div>
+        <div class="stock-popup-grid">
+          <div class="stock-popup-item">
+            <span class="stock-popup-label">現在値</span>
+            <span class="stock-popup-value">${data.price.toLocaleString()} ${data.currency}</span>
+          </div>
+          <div class="stock-popup-item">
+            <span class="stock-popup-label">前日終値</span>
+            <span class="stock-popup-value">${data.prevClose.toLocaleString()}</span>
+          </div>
+          <div class="stock-popup-item">
+            <span class="stock-popup-label">高値</span>
+            <span class="stock-popup-value">${data.high.toLocaleString()}</span>
+          </div>
+          <div class="stock-popup-item">
+            <span class="stock-popup-label">安値</span>
+            <span class="stock-popup-value">${data.low.toLocaleString()}</span>
+          </div>
+          <div class="stock-popup-item" style="grid-column: span 2;">
+            <span class="stock-popup-label">出来高</span>
+            <span class="stock-popup-value">${formatVol(data.volume)}</span>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const rect = targetEl.getBoundingClientRect();
+    let left = rect.right + 10;
+    let top = rect.top;
+    if (left + 300 > window.innerWidth) left = rect.left - 310;
+
+    popup.style.left = `${left + window.scrollX}px`;
+    popup.style.top = `${top + window.scrollY}px`;
+    popup.style.width = '300px';
+    popup.classList.add('visible');
+  }
+
+  _hidePopup() {
+    const popup = document.querySelector('.widget-popup');
+    if (popup) popup.classList.remove('visible');
+  }
+
+  _renderMiniChart(data) {
+    const history = (data.history || []).filter(p => p !== null);
+    if (history.length < 2) return '<div style="font-size:0.7rem;color:var(--text-tertiary)">チャートデータなし</div>';
+
+    const min = Math.min(...history);
+    const max = Math.max(...history);
+    const range = max - min || 1;
+    const padding = 2; // SVG内での余白
+    const width = 280;
+    const height = 64;
+
+    const points = history.map((p, i) => {
+      const x = (i / (history.length - 1)) * width;
+      const y = height - ((p - min) / range) * (height - padding * 2) - padding;
+      return `${x},${y}`;
+    }).join(' ');
+
+    const trendClass = data.price >= data.prevClose ? 'up' : 'down';
+
+    return `
+      <div style="position:relative; width:${width}px; height:${height}px;">
+        <div style="position:absolute; top:2px; left:4px; font-size:10px; color:var(--text-tertiary); font-weight:bold; pointer-events:none;">1D</div>
+        <svg viewBox="0 0 ${width} ${height}" class="stock-chart-svg">
+          <!-- 基準線 (前日終値相当の位置を点線で示す) -->
+          <line x1="0" y1="${height - ((data.prevClose - min) / range) * (height - padding * 2) - padding}" x2="${width}" y2="${height - ((data.prevClose - min) / range) * (height - padding * 2) - padding}"
+                stroke="var(--border-color)" stroke-width="1" stroke-dasharray="4,4" />
+          <path class="stock-chart-path ${trendClass}" d="M ${points}" />
+        </svg>
+      </div>
+    `;
   }
 
   _showManageDialog(editIndex = -1) {
