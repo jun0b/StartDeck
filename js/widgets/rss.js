@@ -305,34 +305,31 @@ class RSSWidget extends WidgetBase {
     return tmp.textContent || '';
   }
 
-  _showAddFeedDialog(editIndex = -1) {
-    const isEdit = editIndex >= 0;
-    const feed = isEdit ? this.config.feeds[editIndex] : { name: '', url: '' };
-
+  _showManageDialog() {
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
+    // parentModalとして自身を渡すためにzIndexを指定しないか、基本のままでOK
     overlay.innerHTML = `
       <div class="modal">
-        <div class="modal__header"><span class="modal__title">RSSフィードを管理</span><button class="modal__close">&times;</button></div>
+        <div class="modal__header">
+          <span class="modal__title">RSSフィードを管理</span>
+          <button class="modal__close">&times;</button>
+        </div>
         <div class="modal__body">
-          <div style="margin-bottom:16px;max-height:200px;overflow-y:auto" id="rss-feed-list">
+          <div style="margin-bottom:16px;max-height:300px;overflow-y:auto" id="rss-feed-list">
             ${(this.config.feeds || []).map((f, i) => `
-              <div class="draggable-item" draggable="true" data-idx="${i}" style="display:flex;align-items:center;gap:4px;padding:6px 0;border-bottom:1px solid var(--border-color); cursor: grab; transition: opacity 0.2s;">
+              <div class="draggable-item" draggable="true" data-idx="${i}" style="display:flex;align-items:center;gap:4px;padding:8px 0;border-bottom:1px solid var(--border-color); cursor: grab; transition: opacity 0.2s;">
                 <span style="font-size:0.8rem;color:var(--text-tertiary);padding-right:4px">≡</span>
-                <span style="flex:1;font-size:0.82rem;font-weight:${i === editIndex ? 'bold' : 'normal'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${this._escapeHtml(f.url)}">${this._escapeHtml(f.name)}</span>
-                <button class="btn btn--ghost" style="padding:2px 8px;font-size:0.72rem" data-action="edit" data-idx="${i}">編集</button>
-                <button class="btn btn--danger" style="padding:2px 8px;font-size:0.72rem" data-remove="${i}">削除</button>
+                <span style="flex:1;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${this._escapeHtml(f.url)}">${this._escapeHtml(f.name)}</span>
+                <button class="btn btn--ghost" style="padding:2px 8px;font-size:0.75rem" data-action="edit" data-idx="${i}">編集</button>
+                <button class="btn btn--danger" style="padding:2px 8px;font-size:0.75rem" data-remove="${i}">削除</button>
               </div>
             `).join('')}
           </div>
-          <div style="font-weight:600;margin-bottom:8px;font-size:0.85rem">${isEdit ? 'フィードを編集' : '新しいフィードを追加'}</div>
-          <div class="form-group"><label class="form-label">フィード名</label><input class="form-input" id="rss-feed-name" value="${this._escapeHtml(feed.name)}" placeholder="例: NHK"></div>
-          <div class="form-group"><label class="form-label">RSS URL</label><input class="form-input" id="rss-feed-url" value="${this._escapeHtml(feed.url)}" placeholder="https://..."></div>
+          <button class="btn btn--ghost" id="btn-add-feed" style="width:100%;font-size:0.85rem">+ 新しいフィードを追加</button>
         </div>
         <div class="modal__footer">
-          <button class="btn btn--ghost modal-close-btn">閉じる</button>
-          ${isEdit ? '<button class="btn btn--ghost" id="rss-cancel-edit-btn">追加に戻る</button>' : ''}
-          <button class="btn btn--primary" id="rss-add-btn">${isEdit ? '保存' : '追加'}</button>
+          <button class="btn btn--primary modal-close-btn">閉じる</button>
         </div>
       </div>
     `;
@@ -340,26 +337,33 @@ class RSSWidget extends WidgetBase {
     const close = () => { overlay.remove(); this.updateBody(); };
     overlay.querySelector('.modal__close').addEventListener('click', close);
     overlay.querySelector('.modal-close-btn').addEventListener('click', close);
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
 
     overlay.querySelectorAll('[data-remove]').forEach(btn => {
       btn.addEventListener('click', () => {
         const i = parseInt(btn.dataset.remove);
-        this.config.feeds.splice(i, 1);
-        this.save();
-        close();
-        this._showAddFeedDialog();
+        if (confirm(`「${this.config.feeds[i].name}」を削除しますか？`)) {
+          this.config.feeds.splice(i, 1);
+          if (this.config.activeTab >= this.config.feeds.length) {
+            this.config.activeTab = Math.max(0, this.config.feeds.length - 1);
+          }
+          this.save();
+          overlay.remove();
+          this._showManageDialog();
+        }
       });
     });
 
     overlay.querySelectorAll('[data-action="edit"]').forEach(btn => {
       btn.addEventListener('click', () => {
-        const i = parseInt(btn.dataset.idx);
-        close();
-        this._showAddFeedDialog(i);
+        this._showEditDialog(parseInt(btn.dataset.idx), overlay);
       });
     });
 
+    overlay.querySelector('#btn-add-feed').addEventListener('click', () => {
+      this._showEditDialog(-1, overlay);
+    });
+
+    // ドラッグ＆ドロップ実装
     let draggedIdx = null;
     overlay.querySelectorAll('.draggable-item').forEach(item => {
       item.addEventListener('dragstart', (e) => {
@@ -407,36 +411,73 @@ class RSSWidget extends WidgetBase {
         arr.splice(insertIdx, 0, movedItem);
 
         this.save();
-        close();
-
-        let newEditIdx = editIndex;
-        if (editIndex === draggedIdx) newEditIdx = insertIdx;
-        else if (editIndex !== -1) {
-          if (draggedIdx < editIndex && insertIdx >= editIndex) newEditIdx--;
-          else if (draggedIdx > editIndex && insertIdx <= editIndex) newEditIdx++;
-        }
-        this._showAddFeedDialog(newEditIdx);
+        overlay.remove();
+        this._showManageDialog();
       });
     });
 
-    overlay.querySelector('#rss-cancel-edit-btn')?.addEventListener('click', () => {
-      close();
-      this._showAddFeedDialog(-1);
-    });
+    document.body.appendChild(overlay);
+  }
 
-    overlay.querySelector('#rss-add-btn')?.addEventListener('click', () => {
+  _showEditDialog(editIndex = -1, parentModal = null) {
+    const isEdit = editIndex >= 0;
+    const feed = isEdit ? this.config.feeds[editIndex] : { name: '', url: '' };
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    // 既存のモーダルより上に表示するためのz-index調整
+    overlay.style.zIndex = '1100';
+    overlay.innerHTML = `
+      <div class="modal">
+        <div class="modal__header">
+          <span class="modal__title">${isEdit ? 'フィードを編集' : '新しいフィードを追加'}</span>
+          <button class="modal__close">&times;</button>
+        </div>
+        <div class="modal__body">
+          <div class="form-group">
+            <label class="form-label">フィード名</label>
+            <input class="form-input" id="rss-feed-name" value="${this._escapeHtml(feed.name)}" placeholder="例: NHK">
+          </div>
+          <div class="form-group">
+            <label class="form-label">RSS URL</label>
+            <input class="form-input" id="rss-feed-url" value="${this._escapeHtml(feed.url)}" placeholder="https://...">
+          </div>
+        </div>
+        <div class="modal__footer">
+          <button class="btn btn--ghost modal-cancel-btn">キャンセル</button>
+          <button class="btn btn--primary" id="rss-save-btn">${isEdit ? '保存' : '追加'}</button>
+        </div>
+      </div>
+    `;
+
+    const close = () => overlay.remove();
+    overlay.querySelector('.modal__close').addEventListener('click', close);
+    overlay.querySelector('.modal-cancel-btn').addEventListener('click', close);
+
+    overlay.querySelector('#rss-save-btn').addEventListener('click', () => {
       const name = overlay.querySelector('#rss-feed-name').value.trim();
       const url = overlay.querySelector('#rss-feed-url').value.trim();
-      if (!name || !url) return;
+      if (!name || !url) {
+        alert('フィード名とURLを入力してください');
+        return;
+      }
+      
       if (!this.config.feeds) this.config.feeds = [];
+      
       if (isEdit) {
         this.config.feeds[editIndex] = { name, url };
       } else {
         this.config.feeds.push({ name, url });
       }
+      
       this.save();
       close();
-      this._showAddFeedDialog(-1);
+      if (parentModal) {
+        parentModal.remove();
+        this._showManageDialog();
+      } else {
+        this.updateBody();
+      }
     });
 
     document.body.appendChild(overlay);
@@ -453,7 +494,7 @@ class RSSWidget extends WidgetBase {
 
   handleContextMenuAction(action) {
     if (action === 'manageFeeds') {
-      this._showAddFeedDialog(-1);
+      this._showManageDialog();
       return true;
     } else if (action === 'refresh') {
       const activeIdx = this.config.activeTab || 0;

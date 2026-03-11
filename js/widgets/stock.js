@@ -238,63 +238,62 @@ class StockWidget extends WidgetBase {
     `;
   }
 
-  _showManageDialog(editIndex = -1) {
-    const isEdit = editIndex >= 0;
-    const symObj = isEdit ? this.config.symbols[editIndex] : '';
-
+  _showManageDialog() {
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.innerHTML = `
       <div class="modal">
-        <div class="modal__header"><span class="modal__title">銘柄を管理</span><button class="modal__close">&times;</button></div>
+        <div class="modal__header">
+          <span class="modal__title">銘柄を管理</span>
+          <button class="modal__close">&times;</button>
+        </div>
         <div class="modal__body">
           <div style="margin-bottom:12px;font-size:0.78rem;color:var(--text-secondary)">
             米国株: AAPL, GOOGL 等<br>
             日本株: 7203.T (トヨタ), 6758.T (ソニー) 等
           </div>
-          <div id="stock-symbol-list" style="margin-bottom:16px;max-height:200px;overflow-y:auto">
+          <div id="stock-symbol-list" style="margin-bottom:16px;max-height:300px;overflow-y:auto">
             ${(this.config.symbols || []).map((s, i) => `
-              <div class="draggable-item" draggable="true" data-idx="${i}" style="display:flex;align-items:center;gap:4px;padding:6px 0;border-bottom:1px solid var(--border-color); cursor: grab; transition: opacity 0.2s;">
+              <div class="draggable-item" draggable="true" data-idx="${i}" style="display:flex;align-items:center;gap:4px;padding:8px 0;border-bottom:1px solid var(--border-color); cursor: grab; transition: opacity 0.2s;">
                 <span style="font-size:0.8rem;color:var(--text-tertiary);padding-right:4px">≡</span>
-                <span style="flex:1;font-size:0.85rem;font-weight:${i === editIndex ? 'bold' : '600'}">${this._escapeHtml(s)}</span>
-                <button class="btn btn--ghost" style="padding:2px 8px;font-size:0.72rem" data-action="edit" data-idx="${i}">編集</button>
-                <button class="btn btn--danger" style="padding:2px 8px;font-size:0.72rem" data-remove="${i}">削除</button>
+                <span style="flex:1;font-size:0.85rem;font-weight:600">${this._escapeHtml(s)}</span>
+                <button class="btn btn--ghost" style="padding:2px 8px;font-size:0.75rem" data-action="edit" data-idx="${i}">編集</button>
+                <button class="btn btn--danger" style="padding:2px 8px;font-size:0.75rem" data-remove="${i}">削除</button>
               </div>
             `).join('')}
           </div>
-          <div style="font-weight:600;margin-bottom:8px;font-size:0.85rem">${isEdit ? 'シンボルを編集' : 'ティッカーシンボルを追加'}</div>
-          <div class="form-group">
-            <div style="display:flex;gap:8px">
-              <input class="form-input" id="stock-new-symbol" value="${this._escapeHtml(symObj)}" placeholder="例: AAPL" style="flex:1">
-              ${isEdit ? '<button class="btn btn--ghost" id="stock-cancel-edit-btn">追加に戻る</button>' : ''}
-              <button class="btn btn--primary" id="stock-add-symbol">${isEdit ? '保存' : '追加'}</button>
-            </div>
-          </div>
+          <button class="btn btn--ghost" id="btn-add-symbol" style="width:100%;font-size:0.85rem">+ 新しい銘柄を追加</button>
         </div>
-        <div class="modal__footer"><button class="btn btn--ghost modal-close-btn">閉じる</button></div>
+        <div class="modal__footer">
+          <button class="btn btn--primary modal-close-btn">閉じる</button>
+        </div>
       </div>
     `;
 
     const close = () => { overlay.remove(); this.updateBody(); };
     overlay.querySelector('.modal__close').addEventListener('click', close);
     overlay.querySelector('.modal-close-btn').addEventListener('click', close);
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
 
     overlay.querySelectorAll('[data-remove]').forEach(btn => {
       btn.addEventListener('click', () => {
-        this.config.symbols.splice(parseInt(btn.dataset.remove), 1);
-        this.save();
-        close();
-        this._showManageDialog();
+        const i = parseInt(btn.dataset.remove);
+        if (confirm(`銘柄「${this.config.symbols[i]}」を削除しますか？`)) {
+          this.config.symbols.splice(i, 1);
+          this.save();
+          overlay.remove();
+          this._showManageDialog();
+        }
       });
     });
 
     overlay.querySelectorAll('[data-action="edit"]').forEach(btn => {
       btn.addEventListener('click', () => {
-        const i = parseInt(btn.dataset.idx);
-        close();
-        this._showManageDialog(i);
+        this._showEditDialog(parseInt(btn.dataset.idx), overlay);
       });
+    });
+
+    overlay.querySelector('#btn-add-symbol').addEventListener('click', () => {
+      this._showEditDialog(-1, overlay);
     });
 
     let draggedIdx = null;
@@ -344,26 +343,51 @@ class StockWidget extends WidgetBase {
         arr.splice(insertIdx, 0, movedItem);
 
         this.save();
-        close();
-
-        let newEditIdx = editIndex;
-        if (editIndex === draggedIdx) newEditIdx = insertIdx;
-        else if (editIndex !== -1) {
-          if (draggedIdx < editIndex && insertIdx >= editIndex) newEditIdx--;
-          else if (draggedIdx > editIndex && insertIdx <= editIndex) newEditIdx++;
-        }
-        this._showManageDialog(newEditIdx);
+        overlay.remove();
+        this._showManageDialog();
       });
     });
 
-    overlay.querySelector('#stock-cancel-edit-btn')?.addEventListener('click', () => {
-      close();
-      this._showManageDialog(-1);
-    });
+    document.body.appendChild(overlay);
+  }
 
-    overlay.querySelector('#stock-add-symbol')?.addEventListener('click', () => {
+  _showEditDialog(editIndex = -1, parentModal = null) {
+    const isEdit = editIndex >= 0;
+    const symObj = isEdit ? this.config.symbols[editIndex] : '';
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.zIndex = '1100';
+    overlay.innerHTML = `
+      <div class="modal">
+        <div class="modal__header">
+          <span class="modal__title">${isEdit ? '銘柄を編集' : '新しい銘柄を追加'}</span>
+          <button class="modal__close">&times;</button>
+        </div>
+        <div class="modal__body">
+          <div class="form-group">
+            <label class="form-label">ティッカーシンボル</label>
+            <input class="form-input" id="stock-new-symbol" value="${this._escapeHtml(symObj)}" placeholder="例: AAPL">
+          </div>
+        </div>
+        <div class="modal__footer">
+          <button class="btn btn--ghost modal-cancel-btn">キャンセル</button>
+          <button class="btn btn--primary" id="stock-save-btn">${isEdit ? '保存' : '追加'}</button>
+        </div>
+      </div>
+    `;
+
+    const close = () => overlay.remove();
+    overlay.querySelector('.modal__close').addEventListener('click', close);
+    overlay.querySelector('.modal-cancel-btn').addEventListener('click', close);
+
+    overlay.querySelector('#stock-save-btn').addEventListener('click', () => {
       const sym = overlay.querySelector('#stock-new-symbol').value.trim().toUpperCase();
-      if (!sym) return;
+      if (!sym) {
+        alert('ティッカーシンボルを入力してください');
+        return;
+      }
+      
       if (!this.config.symbols) this.config.symbols = [];
 
       if (isEdit) {
@@ -374,11 +398,20 @@ class StockWidget extends WidgetBase {
       } else {
         if (!this.config.symbols.includes(sym)) {
           this.config.symbols.push(sym);
+        } else {
+          alert('既に登録されています');
+          return;
         }
       }
+      
       this.save();
       close();
-      this._showManageDialog(-1);
+      if (parentModal) {
+        parentModal.remove();
+        this._showManageDialog();
+      } else {
+        this.updateBody();
+      }
     });
 
     document.body.appendChild(overlay);

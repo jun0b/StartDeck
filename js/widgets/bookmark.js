@@ -345,33 +345,30 @@ class BookmarkWidget extends WidgetBase {
     document.body.appendChild(overlay);
   }
 
-  _showManageGroupsDialog(editIndex = -1) {
-    const isEdit = editIndex >= 0;
-    const group = isEdit ? this.config.groups[editIndex] : { name: '', bookmarks: [] };
-
+  _showManageGroupsDialog() {
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.innerHTML = `
       <div class="modal">
-        <div class="modal__header"><span class="modal__title">グループを管理</span><button class="modal__close">&times;</button></div>
+        <div class="modal__header">
+          <span class="modal__title">グループを管理</span>
+          <button class="modal__close">&times;</button>
+        </div>
         <div class="modal__body">
-          <div style="margin-bottom:16px;max-height:200px;overflow-y:auto" id="bookmark-group-list">
+          <div style="margin-bottom:16px;max-height:300px;overflow-y:auto" id="bookmark-group-list">
             ${(this.config.groups || []).map((g, i) => `
-              <div class="draggable-item" draggable="true" data-idx="${i}" style="display:flex;align-items:center;gap:4px;padding:6px 0;border-bottom:1px solid var(--border-color); cursor: grab; transition: opacity 0.2s;">
+              <div class="draggable-item" draggable="true" data-idx="${i}" style="display:flex;align-items:center;gap:4px;padding:8px 0;border-bottom:1px solid var(--border-color); cursor: grab; transition: opacity 0.2s;">
                 <span style="font-size:0.8rem;color:var(--text-tertiary);padding-right:4px">≡</span>
-                <span style="flex:1;font-size:0.82rem;font-weight:${i === editIndex ? 'bold' : 'normal'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${this._escapeHtml(g.name)}</span>
-                <button class="btn btn--ghost" style="padding:2px 8px;font-size:0.72rem" data-action="edit" data-idx="${i}">編集</button>
-                <button class="btn btn--danger" style="padding:2px 8px;font-size:0.72rem" data-remove="${i}">削除</button>
+                <span style="flex:1;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${this._escapeHtml(g.name)}</span>
+                <button class="btn btn--ghost" style="padding:2px 8px;font-size:0.75rem" data-action="edit" data-idx="${i}">編集</button>
+                <button class="btn btn--danger" style="padding:2px 8px;font-size:0.75rem" data-remove="${i}">削除</button>
               </div>
             `).join('')}
           </div>
-          <div style="font-weight:600;margin-bottom:8px;font-size:0.85rem">${isEdit ? 'グループを編集' : '新しいグループを追加'}</div>
-          <div class="form-group"><label class="form-label">グループ名</label><input class="form-input" id="group-name" value="${this._escapeHtml(group.name)}" placeholder="例: よく使う"></div>
+          <button class="btn btn--ghost" id="btn-add-group" style="width:100%;font-size:0.85rem">+ 新しいグループを追加</button>
         </div>
         <div class="modal__footer">
-          <button class="btn btn--ghost modal-close-btn">閉じる</button>
-          ${isEdit ? '<button class="btn btn--ghost" id="group-cancel-edit-btn">追加に戻る</button>' : ''}
-          <button class="btn btn--primary" id="group-save-btn">${isEdit ? '保存' : '追加'}</button>
+          <button class="btn btn--primary modal-close-btn">閉じる</button>
         </div>
       </div>
     `;
@@ -379,7 +376,6 @@ class BookmarkWidget extends WidgetBase {
     const close = () => { overlay.remove(); this.updateBody(); };
     overlay.querySelector('.modal__close').addEventListener('click', close);
     overlay.querySelector('.modal-close-btn').addEventListener('click', close);
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
 
     overlay.querySelectorAll('[data-remove]').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -390,7 +386,7 @@ class BookmarkWidget extends WidgetBase {
             this.config.activeGroupIndex = Math.max(0, this.config.groups.length - 1);
           }
           this.save();
-          close();
+          overlay.remove();
           this._showManageGroupsDialog();
         }
       });
@@ -398,10 +394,12 @@ class BookmarkWidget extends WidgetBase {
 
     overlay.querySelectorAll('[data-action="edit"]').forEach(btn => {
       btn.addEventListener('click', () => {
-        const i = parseInt(btn.dataset.idx);
-        close();
-        this._showManageGroupsDialog(i);
+        this._showEditGroupDialog(parseInt(btn.dataset.idx), overlay);
       });
+    });
+
+    overlay.querySelector('#btn-add-group').addEventListener('click', () => {
+      this._showEditGroupDialog(-1, overlay);
     });
 
     let draggedIdx = null;
@@ -451,36 +449,67 @@ class BookmarkWidget extends WidgetBase {
         arr.splice(insertIdx, 0, movedItem);
 
         this.save();
-        close();
-
-        // Restore edit state
-        let newEditIdx = editIndex;
-        if (editIndex === draggedIdx) newEditIdx = insertIdx;
-        else if (editIndex !== -1) {
-          if (draggedIdx < editIndex && insertIdx >= editIndex) newEditIdx--;
-          else if (draggedIdx > editIndex && insertIdx <= editIndex) newEditIdx++;
-        }
-        this._showManageGroupsDialog(newEditIdx);
+        overlay.remove();
+        this._showManageGroupsDialog();
       });
     });
 
-    overlay.querySelector('#group-cancel-edit-btn')?.addEventListener('click', () => {
-      close();
-      this._showManageGroupsDialog(-1);
-    });
+    document.body.appendChild(overlay);
+  }
 
-    overlay.querySelector('#group-save-btn')?.addEventListener('click', () => {
+  _showEditGroupDialog(editIndex = -1, parentModal = null) {
+    const isEdit = editIndex >= 0;
+    const group = isEdit ? this.config.groups[editIndex] : { name: '', bookmarks: [] };
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.zIndex = '1100';
+    overlay.innerHTML = `
+      <div class="modal">
+        <div class="modal__header">
+          <span class="modal__title">${isEdit ? 'グループを編集' : '新しいグループを追加'}</span>
+          <button class="modal__close">&times;</button>
+        </div>
+        <div class="modal__body">
+          <div class="form-group">
+            <label class="form-label">グループ名</label>
+            <input class="form-input" id="group-name" value="${this._escapeHtml(group.name)}" placeholder="例: よく使う">
+          </div>
+        </div>
+        <div class="modal__footer">
+          <button class="btn btn--ghost modal-cancel-btn">キャンセル</button>
+          <button class="btn btn--primary" id="group-save-btn">${isEdit ? '保存' : '追加'}</button>
+        </div>
+      </div>
+    `;
+
+    const close = () => overlay.remove();
+    overlay.querySelector('.modal__close').addEventListener('click', close);
+    overlay.querySelector('.modal-cancel-btn').addEventListener('click', close);
+
+    overlay.querySelector('#group-save-btn').addEventListener('click', () => {
       const name = overlay.querySelector('#group-name').value.trim();
-      if (!name) return;
+      if (!name) {
+        alert('グループ名を入力してください');
+        return;
+      }
+      
       if (!this.config.groups) this.config.groups = [];
+      
       if (isEdit) {
         this.config.groups[editIndex].name = name;
       } else {
         this.config.groups.push({ name, bookmarks: [] });
       }
+      
       this.save();
       close();
-      this._showManageGroupsDialog(-1);
+      if (parentModal) {
+        parentModal.remove();
+        this._showManageGroupsDialog();
+      } else {
+        this.updateBody();
+      }
     });
 
     document.body.appendChild(overlay);
