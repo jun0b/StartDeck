@@ -525,10 +525,11 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .column-container {
+  flex: 1;
   display: grid;
   grid-template-columns: repeat(var(--column-count, 3), 1fr);
   gap: var(--column-gap);
-  align-items: start;
+  align-items: stretch;
   width: 100%;
 }
 
