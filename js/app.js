@@ -119,8 +119,24 @@ const App = {
     const panel = document.getElementById('settings-panel');
     const closeBtn = document.getElementById('settings-close');
 
-    settingsBtn?.addEventListener('click', () => panel?.classList.toggle('open'));
+    settingsBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      panel?.classList.toggle('open');
+    });
     closeBtn?.addEventListener('click', () => panel?.classList.remove('open'));
+
+    // パネル外クリックで閉じる
+    document.addEventListener('click', (e) => {
+      if (panel?.classList.contains('open')) {
+        if (!panel.contains(e.target) && !settingsBtn.contains(e.target)) {
+          panel.classList.remove('open');
+        }
+      }
+    });
+
+    panel?.addEventListener('click', (e) => {
+      e.stopPropagation(); // パネル内でのクリックがドキュメントに伝播して閉じるのを防ぐ
+    });
 
     // --- テーマ切替 ---
     const themeSelect = document.getElementById('setting-theme');
