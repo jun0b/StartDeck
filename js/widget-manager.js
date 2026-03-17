@@ -223,34 +223,41 @@ const WidgetManager = {
     this._showToast('ウィジェットを削除しました', 'info');
   },
 
+  _saveTimer: null,
   async saveLayout() {
-    const widgetData = [];
-    for (const col of this.columns) {
-      const colIndex = parseInt(col.dataset.column);
-      const widgetEls = col.querySelectorAll('.widget');
-      widgetEls.forEach(el => {
-        const id = el.dataset.widgetId;
-        const w = this.widgets[id];
-        if (w) {
-          widgetData.push({ id, type: w.type, column: colIndex, config: w.config });
-        }
-      });
-    }
-    this.layout.widgets = widgetData;
-    await Storage.set('dashboard_layout', this.layout);
+    clearTimeout(this._saveTimer);
+    this._saveTimer = setTimeout(async () => {
+      const widgetData = [];
+      for (const col of this.columns) {
+        const colIndex = parseInt(col.dataset.column);
+        const widgetEls = col.querySelectorAll('.widget');
+        widgetEls.forEach(el => {
+          const id = el.dataset.widgetId;
+          const w = this.widgets[id];
+          if (w) {
+            widgetData.push({ id, type: w.type, column: colIndex, config: w.config });
+          }
+        });
+      }
+      this.layout.widgets = widgetData;
+      await Storage.set('dashboard_layout', this.layout);
+    }, 500);
   },
 
   _bindDragDrop() {
     const dashboard = document.getElementById('dashboard');
     if (!dashboard) return;
 
+    let lastCol = null;
     dashboard.addEventListener('dragover', (e) => {
       e.preventDefault();
       e.dataTransfer.dropEffect = 'move';
+      
       const col = e.target.closest('.column');
-      if (col) {
-        document.querySelectorAll('.column.drag-over').forEach(c => c.classList.remove('drag-over'));
+      if (col && col !== lastCol) {
+        if (lastCol) lastCol.classList.remove('drag-over');
         col.classList.add('drag-over');
+        lastCol = col;
       }
     });
 
@@ -258,12 +265,15 @@ const WidgetManager = {
       const col = e.target.closest('.column');
       if (col && !col.contains(e.relatedTarget)) {
         col.classList.remove('drag-over');
+        if (lastCol === col) lastCol = null;
       }
     });
 
     dashboard.addEventListener('drop', (e) => {
       e.preventDefault();
       document.querySelectorAll('.column.drag-over').forEach(c => c.classList.remove('drag-over'));
+      lastCol = null;
+      
       const widgetId = e.dataTransfer.getData('text/plain');
       const widget = this.widgets[widgetId];
       if (!widget) return;

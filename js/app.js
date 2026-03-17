@@ -65,19 +65,24 @@ const App = {
       }
     }, true);
 
-    // --- Tab Scroll Logic ---
+    // --- Tab Scroll Logic Optimization ---
+    let scrollUpdateTimer;
+    const updateScrollButtons = (container) => {
+      if (!container) return;
+      const tabs = container.querySelector('.rss-tabs, .bookmark-tabs, .memo-tabs');
+      if (!tabs) return;
+      const leftBtn = container.querySelector('.tabs-scroll-btn.left');
+      const rightBtn = container.querySelector('.tabs-scroll-btn.right');
+      const canScrollLeft = tabs.scrollLeft > 2;
+      const canScrollRight = tabs.scrollLeft + tabs.clientWidth < tabs.scrollWidth - 2;
+      if (leftBtn) leftBtn.classList.toggle('visible', canScrollLeft);
+      if (rightBtn) rightBtn.classList.toggle('visible', canScrollRight);
+    };
+
     document.addEventListener('mouseover', (e) => {
       const container = e.target.closest('.tabs-scroll-container');
       if (container) {
-        const tabs = container.querySelector('.rss-tabs, .bookmark-tabs, .memo-tabs');
-        if (tabs) {
-          const leftBtn = container.querySelector('.tabs-scroll-btn.left');
-          const rightBtn = container.querySelector('.tabs-scroll-btn.right');
-          const canScrollLeft = tabs.scrollLeft > 2;
-          const canScrollRight = tabs.scrollLeft + tabs.clientWidth < tabs.scrollWidth - 2;
-          if (leftBtn) leftBtn.classList.toggle('visible', canScrollLeft);
-          if (rightBtn) rightBtn.classList.toggle('visible', canScrollRight);
-        }
+        updateScrollButtons(container);
       }
     });
 
@@ -87,25 +92,24 @@ const App = {
         const tabs = btn.parentElement.querySelector('.rss-tabs, .bookmark-tabs, .memo-tabs');
         if (tabs) {
           const amount = 150;
-          if (btn.classList.contains('left')) tabs.scrollBy({ left: -amount, behavior: 'smooth' });
-          if (btn.classList.contains('right')) tabs.scrollBy({ left: amount, behavior: 'smooth' });
+          if (btn.classList.contains('left')) {
+            tabs.scrollBy({ left: -amount, behavior: 'smooth' });
+          } else {
+            tabs.scrollBy({ left: amount, behavior: 'smooth' });
+          }
+          // スクロール後にボタン状態を更新
+          setTimeout(() => updateScrollButtons(btn.parentElement), 300);
         }
       }
     });
 
     document.addEventListener('scroll', (e) => {
-      if (e.target && e.target.classList) {
-        if (e.target.classList.contains('rss-tabs') || e.target.classList.contains('bookmark-tabs') || e.target.classList.contains('memo-tabs')) {
-          const container = e.target.closest('.tabs-scroll-container');
-          if (container) {
-            const leftBtn = container.querySelector('.tabs-scroll-btn.left');
-            const rightBtn = container.querySelector('.tabs-scroll-btn.right');
-            const canScrollLeft = e.target.scrollLeft > 2;
-            const canScrollRight = e.target.scrollLeft + e.target.clientWidth < e.target.scrollWidth - 2;
-            if (leftBtn) leftBtn.classList.toggle('visible', canScrollLeft);
-            if (rightBtn) rightBtn.classList.toggle('visible', canScrollRight);
-          }
-        }
+      if (e.target.classList && (e.target.classList.contains('rss-tabs') || e.target.classList.contains('bookmark-tabs') || e.target.classList.contains('memo-tabs'))) {
+        if (scrollUpdateTimer) return;
+        scrollUpdateTimer = setTimeout(() => {
+          updateScrollButtons(e.target.closest('.tabs-scroll-container'));
+          scrollUpdateTimer = null;
+        }, 50);
       }
     }, true);
   },

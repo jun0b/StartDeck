@@ -544,6 +544,7 @@ input[type="file"]::file-selector-button:hover {
   transition: background var(--transition-normal);
   border-radius: var(--border-radius);
   padding: 4px;
+  will-change: background-color;
 }
 
 .column.drag-over {
@@ -593,7 +594,7 @@ input[type="file"]::file-selector-button:hover {
   box-shadow: var(--shadow-sm);
   min-width: 0;
   max-width: 100%;
-  transform: translateZ(0);
+  will-change: transform;
   backface-visibility: hidden;
 }
 
@@ -605,12 +606,14 @@ input[type="file"]::file-selector-button:hover {
 .widget.dragging {
   opacity: 0.5;
   transform: scale(0.98);
+  backdrop-filter: none !important; /* ドラッグ中の負荷軽減 */
 }
 
 .widget.drag-ghost {
   opacity: 0.8;
   box-shadow: var(--shadow-lg);
   transform: rotate(1deg);
+  backdrop-filter: none !important;
 }
 
 /* Widget Header */
