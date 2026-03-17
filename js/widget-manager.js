@@ -135,6 +135,21 @@ const WidgetManager = {
     this._loadWidgets();
     this._bindDragDrop();
     this._bindAddButtons();
+    this._bindBackgroundEvents();
+  },
+
+  _bindBackgroundEvents() {
+    document.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.bg-refresh-btn');
+      if (btn) {
+        btn.classList.add('loading');
+        const bgConfig = this.layout.background || {};
+        const cacheKey = `bg_cache_${bgConfig.type}`;
+        await Storage.remove(cacheKey);
+        await this._applyBackground();
+        // loadingクラスの除去は再描画で自動的に行われる（新しいHTMLに置き換わるため）
+      }
+    });
   },
 
   _defaultLayout() {
@@ -579,11 +594,20 @@ const WidgetManager = {
         // クレジット表示の更新
         const attribution = document.getElementById('bg-attribution');
         if (attribution) {
+          const refreshBtn = `
+            <button class="bg-refresh-btn" title="壁紙を更新">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 4v6h-6"></path>
+                <path d="M1 20v-6h6"></path>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+              </svg>
+            </button>`;
+
           if (bgConfig.type === 'nasa') {
-            attribution.innerHTML = 'Background: <a href="https://apod.nasa.gov/" target="_blank">NASA APOD</a>';
+            attribution.innerHTML = `Background: <a href="https://apod.nasa.gov/" target="_blank">NASA APOD</a> ${refreshBtn}`;
             attribution.style.opacity = '1';
           } else if (bgConfig.type === 'auto') {
-            attribution.innerHTML = 'Background: <a href="https://unsplash.com/" target="_blank">Unsplash</a>';
+            attribution.innerHTML = `Background: <a href="https://unsplash.com/" target="_blank">Unsplash</a> ${refreshBtn}`;
             attribution.style.opacity = '1';
           } else {
             attribution.style.opacity = '0';

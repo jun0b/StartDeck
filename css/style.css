@@ -260,6 +260,41 @@ img {
   color: #fff;
 }
 
+.bg-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: inherit;
+  margin-left: 6px;
+  transition: all var(--transition-fast);
+  pointer-events: auto;
+  vertical-align: middle;
+}
+
+.bg-refresh-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.bg-refresh-btn svg {
+  width: 13px;
+  height: 13px;
+  stroke: currentColor;
+}
+
+.bg-refresh-btn.loading svg {
+  animation: bg-spin 1s linear infinite;
+}
+
+@keyframes bg-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* ---------- Header ---------- */
 .app-header {
   display: flex;
