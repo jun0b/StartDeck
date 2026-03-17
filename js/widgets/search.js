@@ -186,7 +186,7 @@ const SearchManager = {
 
     overlay.querySelectorAll('[data-remove]').forEach(btn => {
       btn.addEventListener('click', async () => {
-        const idx = parseInt(btn.dataset.idx);
+        const idx = parseInt(btn.dataset.remove);
         if (confirm(`「${this.engines[idx].name}」を削除しますか？`)) {
           const removed = this.engines.splice(idx, 1)[0];
           if (this.currentEngine.id === removed.id) this.currentEngine = this.engines[0];
