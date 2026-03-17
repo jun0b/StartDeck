@@ -570,19 +570,32 @@ const WidgetManager = {
         } else {
           let url = '';
           if (bgConfig.type === 'nasa') {
-            const res = await fetch('https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY');
-            if (res.ok) {
-              const data = await res.json();
+            const response = await chrome.runtime.sendMessage({ 
+              action: 'proxyFetch', 
+              url: 'https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY' 
+            });
+            if (response && response.ok) {
+              const data = JSON.parse(response.data);
               if (data.media_type === 'image') {
                 url = data.hdurl || data.url;
               } else {
-                // 画像でない場合はUnsplash等にフォールバック（または前日の画像等）
                 url = 'https://picsum.photos/1920/1080';
               }
             }
           } else {
-            const res = await fetch('https://picsum.photos/1920/1080');
-            if (res.ok) url = res.url;
+            const response = await chrome.runtime.sendMessage({ 
+              action: 'proxyFetch', 
+              url: 'https://picsum.photos/1920/1080' 
+            });
+            // Picsum はリダイレクト先のURLが画像になるため、リクエスト自体が成功すればOK
+            // ただし、プロキシ経由だとリダイレクト後のURL取得に工夫が必要な場合があるため
+            // ここでは直接の fetch が失敗する場合の確実な代案としてプロキシを通す
+            if (response && response.ok) {
+              // background.js の proxyFetch は text() を返すため、
+              // 画像URLそのものを取得するにはプロキシ側での対応が必要だが、
+              // 一旦ここでは標準的な取得フローに合わせる
+              url = 'https://picsum.photos/1920/1080?sig=' + now;
+            }
           }
 
           if (url) {
