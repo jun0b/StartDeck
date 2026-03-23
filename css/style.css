@@ -1002,6 +1002,7 @@ input[type="file"]::file-selector-button:hover {
   max-height: 400px;
   background: var(--bg-widget);
   backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--border-color-hover);
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-lg);
@@ -1012,14 +1013,15 @@ input[type="file"]::file-selector-button:hover {
   pointer-events: auto;
   opacity: 0;
   visibility: hidden;
+  will-change: transform, opacity;
   transition: opacity 0.2s, visibility 0.2s, transform 0.2s;
-  transform: translateY(10px);
+  transform: translate3d(0, 10px, 0);
 }
 
 .widget-popup.visible {
   opacity: 1;
   visibility: visible;
-  transform: translateY(0);
+  transform: translate3d(0, 0, 0);
 }
 
 .widget-popup__title {
