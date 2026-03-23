@@ -5,10 +5,43 @@ class WeatherWidget extends WidgetBase {
   static widgetType = 'weather';
   static defaultConfig = {
     title: '天気',
-    latitude: 35.6895,
-    longitude: 139.6917,
-    locationName: '東京',
+    locationName: '東京都',
     unit: 'celsius'
+  };
+
+  static CAPITALS = {
+    '北海道': '札幌市', '岩手県': '盛岡市', '宮城県': '仙台市', '茨城県': '水戸市',
+    '栃木県': '宇都宮市', '群馬県': '前橋市', '埼玉県': 'さいたま市', '東京都': '東京',
+    '神奈川県': '横浜市', '石川県': '金沢市', '山梨県': '甲府市', '愛知県': '名古屋市',
+    '三重県': '津市', '滋賀県': '大津市', '兵庫県': '神戸市', '島根県': '松江市',
+    '香川県': '高松市', '愛媛県': '松山市', '沖縄県': '那覇市'
+  };
+
+  static PREFECTURES = {
+    '北海道': { lat: 43.0642, lon: 141.3469 }, '青森県': { lat: 40.8244, lon: 140.7400 },
+    '岩手県': { lat: 39.7036, lon: 141.1525 }, '宮城県': { lat: 38.2682, lon: 140.8694 },
+    '秋田県': { lat: 39.7186, lon: 140.1025 }, '山形県': { lat: 38.2404, lon: 140.3633 },
+    '福島県': { lat: 37.7503, lon: 140.4675 }, '茨城県': { lat: 36.3418, lon: 140.4468 },
+    '栃木県': { lat: 36.5658, lon: 139.8836 }, '群馬県': { lat: 36.3911, lon: 139.0608 },
+    '埼玉県': { lat: 35.8570, lon: 139.6489 }, '千葉県': { lat: 35.6047, lon: 140.1233 },
+    '東京都': { lat: 35.6895, lon: 139.6917 }, '神奈川県': { lat: 35.4478, lon: 139.6425 },
+    '新潟県': { lat: 37.9022, lon: 139.0236 }, '富山県': { lat: 36.6953, lon: 137.2114 },
+    '石川県': { lat: 36.5947, lon: 136.6256 }, '福井県': { lat: 36.0641, lon: 136.2219 },
+    '山梨県': { lat: 35.6639, lon: 138.5683 }, '長野県': { lat: 36.6513, lon: 138.1812 },
+    '岐阜県': { lat: 35.4233, lon: 136.7606 }, '静岡県': { lat: 34.9756, lon: 138.3828 },
+    '愛知県': { lat: 35.1802, lon: 136.9067 }, '三重県': { lat: 34.7303, lon: 136.5086 },
+    '滋賀県': { lat: 35.0045, lon: 135.8686 }, '京都府': { lat: 35.0116, lon: 135.7680 },
+    '大阪府': { lat: 34.6937, lon: 135.5022 }, '兵庫県': { lat: 34.6913, lon: 135.1830 },
+    '奈良県': { lat: 34.6851, lon: 135.8048 }, '和歌山県': { lat: 34.2260, lon: 135.1675 },
+    '鳥取県': { lat: 35.5011, lon: 134.2351 }, '島根県': { lat: 35.4723, lon: 133.0505 },
+    '岡山県': { lat: 34.6618, lon: 133.9344 }, '広島県': { lat: 34.3853, lon: 132.4553 },
+    '山口県': { lat: 34.1858, lon: 131.4714 }, '徳島県': { lat: 34.0703, lon: 134.5548 },
+    '香川県': { lat: 34.3401, lon: 134.0433 }, '愛媛県': { lat: 33.8392, lon: 132.7653 },
+    '高知県': { lat: 33.5597, lon: 133.5311 }, '福岡県': { lat: 33.5902, lon: 130.4017 },
+    '佐賀県': { lat: 33.2635, lon: 130.2988 }, '長崎県': { lat: 32.7503, lon: 129.8777 },
+    '熊本県': { lat: 32.8031, lon: 130.7079 }, '大分県': { lat: 33.2382, lon: 131.6126 },
+    '宮崎県': { lat: 31.9111, lon: 131.4239 }, '鹿児島県': { lat: 31.5966, lon: 130.5571 },
+    '沖縄県': { lat: 26.2124, lon: 127.6809 }
   };
 
   renderBody() {
@@ -24,8 +57,11 @@ class WeatherWidget extends WidgetBase {
     if (!body) return;
 
     try {
-      const lat = this.config.latitude || 35.6895;
-      const lon = this.config.longitude || 139.6917;
+      const locName = this.config.locationName || '東京都';
+      const locData = WeatherWidget.PREFECTURES[locName] || WeatherWidget.PREFECTURES['東京都'];
+      const lat = locData.lat;
+      const lon = locData.lon;
+
       const unit = this.config.unit === 'fahrenheit' ? 'fahrenheit' : 'celsius';
       const tempUnit = unit === 'celsius' ? '°C' : '°F';
 
@@ -56,13 +92,20 @@ class WeatherWidget extends WidgetBase {
           </div>`;
       }).join('');
 
+      const locCity = WeatherWidget.CAPITALS[locName] || locName.replace(/(都|府|県)$/, '市');
+
       body.innerHTML = `
         <div class="weather-current" id="weather-current-${this.id}">
           <div class="weather-current__icon">${weatherIcon}</div>
           <div>
             <div class="weather-current__temp">${Math.round(current.temperature_2m)}${tempUnit}</div>
             <div class="weather-current__desc">${weatherDesc}</div>
-            <div class="weather-current__location">${this._escapeHtml(this.config.locationName || '')}</div>
+            <div class="weather-current__location">
+              ${this._escapeHtml(locName)}
+              <div style="font-size:0.65rem; color:var(--text-tertiary); line-height:1.2; margin-top:2px;">
+                ${this._escapeHtml(locCity)} / Lat:${lat.toFixed(2)} Lon:${lon.toFixed(2)}
+              </div>
+            </div>
           </div>
         </div>
         <div class="weather-forecast">${forecastHtml}</div>
@@ -71,7 +114,8 @@ class WeatherWidget extends WidgetBase {
 
       this._bindHovers(data);
     } catch (e) {
-      body.innerHTML = `<div class="empty-state">天気情報を取得できませんでした<br><span style="font-size:0.72rem;color:var(--text-tertiary)">設定から都市を確認してください</span></div>`;
+      const msg = e.message === '地域が見つかりません' ? '地域が見つかりません' : '設定から都市を確認してください';
+      body.innerHTML = `<div class="empty-state">天気情報を取得できませんでした<br><span style="font-size:0.72rem;color:var(--text-tertiary)">${this._escapeHtml(msg)}</span></div>`;
     }
   }
 
@@ -195,9 +239,7 @@ class WeatherWidget extends WidgetBase {
 
   getSettingsFields() {
     return [
-      { key: 'locationName', label: '地域名', type: 'text', placeholder: '東京' },
-      { key: 'latitude', label: '緯度', type: 'text', placeholder: '35.6895' },
-      { key: 'longitude', label: '経度', type: 'text', placeholder: '139.6917' },
+      { key: 'locationName', label: '都道府県', type: 'select', options: Object.keys(WeatherWidget.PREFECTURES).map(p => ({ value: p, label: p })) },
       { key: 'unit', label: '温度単位', type: 'select', options: [
         { value: 'celsius', label: '摂氏 (°C)' }, { value: 'fahrenheit', label: '華氏 (°F)' }
       ]},

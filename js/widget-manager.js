@@ -502,6 +502,9 @@ const WidgetManager = {
     });
 
     document.body.appendChild(overlay);
+    if (typeof widget.onSettingsRender === 'function') {
+      widget.onSettingsRender(overlay);
+    }
   },
 
   _renderSettingsField(field, widget) {
