@@ -2470,3 +2470,329 @@ input[type="file"]::file-selector-button:hover {
   width: 16px;
   height: 16px;
 }
+
+/* ---------- Widget-Specific: Password Generator ---------- */
+.pw-widget {
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pw-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pw-option-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pw-label {
+  font-size: 0.73rem;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  min-width: 50px;
+}
+
+/* 文字数コントロール */
+.pw-length-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: 3px 6px;
+}
+
+.pw-len-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1;
+  transition: all var(--transition-fast);
+}
+
+.pw-len-btn:hover {
+  background: var(--bg-input-focus);
+  color: var(--accent-primary-hover);
+}
+
+.pw-len-val {
+  min-width: 26px;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* 含む文字チェックボックス群 */
+.pw-chars {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.pw-check-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  border: 1px solid var(--border-color);
+  color: var(--text-tertiary);
+  background: transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  user-select: none;
+}
+
+.pw-check-label input[type="checkbox"] {
+  display: none;
+}
+
+.pw-check-label:hover {
+  border-color: var(--accent-primary);
+  color: var(--text-secondary);
+}
+
+.pw-check-label.active {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary-hover);
+}
+
+/* パスワード表示枠 */
+.pw-result-area {
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  overflow: hidden;
+}
+
+.pw-result {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  min-height: 40px;
+  transition: background 0.15s ease;
+}
+
+.pw-result.pw-flash {
+  animation: pwFlash 0.35s ease;
+}
+
+@keyframes pwFlash {
+  0%   { background: rgba(99, 102, 241, 0.12); }
+  100% { background: transparent; }
+}
+
+.pw-result__text {
+  flex: 1;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  color: var(--text-primary);
+  word-break: break-all;
+  line-height: 1.4;
+}
+
+.pw-result__text--error {
+  color: var(--accent-danger);
+  font-family: inherit;
+  font-size: 0.75rem;
+}
+
+/* コピーボタン */
+.pw-copy-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  transition: all var(--transition-fast);
+}
+
+.pw-copy-btn svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pw-copy-btn:hover {
+  background: var(--bg-input-focus);
+  color: var(--text-primary);
+}
+
+.pw-copy-btn--copied {
+  color: var(--accent-success) !important;
+}
+
+/* 生成ボタン */
+.pw-generate-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  padding: 8px 14px;
+  border-radius: var(--border-radius-sm);
+  background: var(--accent-primary);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: all var(--transition-fast);
+  letter-spacing: 0.02em;
+}
+
+.pw-generate-btn svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+
+.pw-generate-btn:hover {
+  background: var(--accent-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+}
+
+.pw-generate-btn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* 記号エディタ */
+.pw-sym-editor {
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  overflow: hidden;
+  max-height: 120px;
+  transition: max-height 0.25s ease, opacity 0.2s ease, border-color 0.2s ease;
+  opacity: 1;
+}
+
+.pw-sym-editor--hidden {
+  max-height: 0;
+  opacity: 0;
+  border-color: transparent;
+  pointer-events: none;
+}
+
+/* トグルヘッダーボタン */
+.pw-sym-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  background: transparent;
+  transition: color var(--transition-fast);
+}
+
+.pw-sym-toggle-btn:hover {
+  color: var(--text-secondary);
+}
+
+.pw-sym-chevron {
+  width: 12px;
+  height: 12px;
+  stroke: currentColor;
+  fill: none;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+  transform: rotate(0deg);
+}
+
+.pw-sym-chevron.open {
+  transform: rotate(180deg);
+}
+
+/* 折り畳み本体 */
+.pw-sym-body {
+  padding: 0 10px 8px;
+  overflow: hidden;
+  max-height: 60px;
+  transition: max-height 0.2s ease, opacity 0.2s ease, padding 0.2s ease;
+  opacity: 1;
+}
+
+.pw-sym-body--hidden {
+  max-height: 0;
+  opacity: 0;
+  padding-bottom: 0;
+  pointer-events: none;
+}
+
+.pw-sym-editor-inner {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.pw-sym-input {
+  flex: 1;
+  height: 28px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 0 8px;
+  font-size: 0.78rem;
+  font-family: 'Courier New', monospace;
+  color: var(--text-primary);
+  outline: none;
+  letter-spacing: 0.08em;
+  transition: border-color var(--transition-fast);
+}
+
+.pw-sym-input:focus {
+  border-color: var(--accent-primary);
+}
+
+.pw-sym-reset-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  font-size: 0.95rem;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.pw-sym-reset-btn:hover {
+  background: var(--bg-input-focus);
+  color: var(--text-primary);
+}
+
+
