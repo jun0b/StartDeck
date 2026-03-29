@@ -140,7 +140,8 @@ class SystemWidget extends WidgetBase {
       barEl.style.backgroundColor = color;
     }
     if (pieEl) {
-      pieEl.style.background = `conic-gradient(${color} ${usage}%, var(--bg-input) ${usage}%)`;
+      pieEl.style.setProperty('--pie-percent', `${usage}%`);
+      pieEl.style.setProperty('--pie-color', color);
     }
   }
 

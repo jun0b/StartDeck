@@ -1,4 +1,4 @@
-﻿/* ============================================
+/* ============================================
    Home Dashboard - Design System & Styles
    ============================================ */
 
@@ -1320,7 +1320,7 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .task-item__checkbox.checked::after {
-  content: "笨・;
+  content: "✓";
   color: white;
   font-size: 10px;
   font-weight: 700;
@@ -3007,6 +3007,18 @@ input[type="file"]::file-selector-button:hover {
   margin-bottom: 0;
 }
 
+@property --pie-percent {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 0%;
+}
+
+@property --pie-color {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: #6366f1;
+}
+
 .system-pie {
   width: 72px;
   height: 72px;
@@ -3015,17 +3027,20 @@ input[type="file"]::file-selector-button:hover {
   align-items: center;
   justify-content: center;
   position: relative;
-  transition: background 0.5s ease;
+  transition: --pie-percent 0.5s ease-out, --pie-color 0.5s ease-out;
   margin: 4px 0;
+  --pie-percent: 0%;
+  --pie-color: #6366f1;
+  background: conic-gradient(var(--pie-color) var(--pie-percent), var(--bg-input) var(--pie-percent));
 }
 
 .system-pie::after {
-  content: " \;
- position: absolute;
- width: 58px;
- height: 58px;
- background: var(--bg-widget, #1e1e22);
- border-radius: 50%;
+  content: "";
+  position: absolute;
+  width: 58px;
+  height: 58px;
+  background: var(--bg-widget, #1e1e22);
+  border-radius: 50%;
 }
 
 .system-pie-value {
