@@ -82,12 +82,14 @@ class WidgetBase {
     });
 
     this.element.addEventListener('dragstart', (e) => {
+      if (e.target !== this.element) return;
       this.element.classList.add('dragging');
       e.dataTransfer.setData('text/plain', this.id);
       e.dataTransfer.effectAllowed = 'move';
     });
 
-    this.element.addEventListener('dragend', () => {
+    this.element.addEventListener('dragend', (e) => {
+      if (e.target !== this.element) return;
       this.element.classList.remove('dragging');
       this.element.draggable = false;
     });
