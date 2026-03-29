@@ -1,4 +1,4 @@
-/* ============================================
+﻿/* ============================================
    Home Dashboard - Design System & Styles
    ============================================ */
 
@@ -641,7 +641,7 @@ input[type="file"]::file-selector-button:hover {
 .widget.dragging {
   opacity: 0.5;
   transform: scale(0.98);
-  backdrop-filter: none !important; /* ドラッグ中の負荷軽減 */
+  backdrop-filter: none !important; /* 繝峨Λ繝・げ荳ｭ縺ｮ雋闕ｷ霆ｽ貂・*/
 }
 
 .widget.drag-ghost {
@@ -1320,7 +1320,7 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .task-item__checkbox.checked::after {
-  content: "✓";
+  content: "笨・;
   color: white;
   font-size: 10px;
   font-weight: 700;
@@ -1647,7 +1647,7 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .calendar-event--upcoming {
-  background: rgba(99, 102, 241, 0.08); /* アクセントカラーの薄い背景 */
+  background: rgba(99, 102, 241, 0.08); /* 繧｢繧ｯ繧ｻ繝ｳ繝医き繝ｩ繝ｼ縺ｮ阮・＞閭梧勹 */
   border-left: 2px solid var(--accent-primary);
 }
 
@@ -2538,7 +2538,7 @@ input[type="file"]::file-selector-button:hover {
   min-width: 50px;
 }
 
-/* 文字数コントロール */
+/* 譁・ｭ玲焚繧ｳ繝ｳ繝医Ο繝ｼ繝ｫ */
 .pw-length-control {
   display: flex;
   align-items: center;
@@ -2575,7 +2575,7 @@ input[type="file"]::file-selector-button:hover {
   color: var(--text-primary);
 }
 
-/* 含む文字チェックボックス群 */
+/* 蜷ｫ繧譁・ｭ励メ繧ｧ繝・け繝懊ャ繧ｯ繧ｹ鄒､ */
 .pw-chars {
   display: flex;
   gap: 5px;
@@ -2613,7 +2613,7 @@ input[type="file"]::file-selector-button:hover {
   color: var(--accent-primary-hover);
 }
 
-/* パスワード表示枠 */
+/* 繝代せ繝ｯ繝ｼ繝芽｡ｨ遉ｺ譫 */
 .pw-result-area {
   background: var(--bg-input);
   border: 1px solid var(--border-color);
@@ -2655,7 +2655,7 @@ input[type="file"]::file-selector-button:hover {
   font-size: 0.75rem;
 }
 
-/* コピーボタン */
+/* 繧ｳ繝斐・繝懊ち繝ｳ */
 .pw-copy-btn {
   width: 28px;
   height: 28px;
@@ -2687,7 +2687,7 @@ input[type="file"]::file-selector-button:hover {
   color: var(--accent-success) !important;
 }
 
-/* 生成ボタン */
+/* 逕滓・繝懊ち繝ｳ */
 .pw-generate-btn {
   display: flex;
   align-items: center;
@@ -2726,7 +2726,7 @@ input[type="file"]::file-selector-button:hover {
   box-shadow: none;
 }
 
-/* 記号エディタ */
+/* 險伜捷繧ｨ繝・ぅ繧ｿ */
 .pw-sym-editor {
   background: var(--bg-input);
   border: 1px solid var(--border-color);
@@ -2744,7 +2744,7 @@ input[type="file"]::file-selector-button:hover {
   pointer-events: none;
 }
 
-/* トグルヘッダーボタン */
+/* 繝医げ繝ｫ繝倥ャ繝繝ｼ繝懊ち繝ｳ */
 .pw-sym-toggle-btn {
   display: flex;
   align-items: center;
@@ -2776,7 +2776,7 @@ input[type="file"]::file-selector-button:hover {
   transform: rotate(180deg);
 }
 
-/* 折り畳み本体 */
+/* 謚倥ｊ逡ｳ縺ｿ譛ｬ菴・*/
 .pw-sym-body {
   padding: 0 10px 8px;
   overflow: hidden;
@@ -2938,88 +2938,3 @@ input[type="file"]::file-selector-button:hover {
   background: rgba(255, 255, 255, 0.03);
 }
 
-.mono {
-  font-family: monospace;
-  background: var(--bg-input-focus);
-  border-color: var(--border-color-hover);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.top-site-item__icon-wrapper {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  flex-shrink: 0;
-  transition: transform var(--transition-fast);
-}
-
-.top-site-item:hover .top-site-item__icon-wrapper {
-  transform: scale(1.1);
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.top-site-item__favicon {
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
-}
-
-.top-site-item__name {
-  font-size: 0.82rem;
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
-  color: var(--text-secondary);
-  transition: color var(--transition-fast);
-}
-
-.top-site-item:hover .top-site-item__name {
-  color: var(--text-primary);
-}
-
-/* Loading state */
-.skeleton-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 10px;
-  padding: 12px;
-}
-
-.skeleton-item {
-  height: 100px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: var(--border-radius-sm);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  animation: skeleton-pulse 1.5s infinite ease-in-out;
-}
-
-.skeleton-icon {
-  width: 36px;
-  height: 36px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-}
-
-.skeleton-text {
-  width: 60px;
-  height: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 4px;
-}
-
-@keyframes skeleton-pulse {
-  0% { opacity: 0.5; }
-  50% { opacity: 1; }
-  100% { opacity: 0.5; }
-}
