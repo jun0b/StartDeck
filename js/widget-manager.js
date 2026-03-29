@@ -16,7 +16,6 @@ class WidgetBase {
     el.className = `widget ${this.config.collapsed ? 'collapsed' : ''}`;
     el.dataset.widgetId = this.id;
     el.dataset.widgetType = this.type;
-    el.draggable = true;
 
     el.innerHTML = `
       <div class="widget__header">
@@ -64,6 +63,14 @@ class WidgetBase {
     const header = this.element.querySelector('.widget__header');
     const settingsBtn = this.element.querySelector('.widget-settings-btn');
 
+    // ドラッグ操作をヘッダー部分のみに限定
+    header.addEventListener('mouseenter', () => {
+      this.element.draggable = true;
+    });
+    header.addEventListener('mouseleave', () => {
+      this.element.draggable = false;
+    });
+
     header.addEventListener('click', (e) => {
       if (e.target.closest('.widget__header-controls')) return;
       this.toggleCollapse();
@@ -82,6 +89,7 @@ class WidgetBase {
 
     this.element.addEventListener('dragend', () => {
       this.element.classList.remove('dragging');
+      this.element.draggable = false;
     });
 
     this.element.addEventListener('contextmenu', (e) => {
