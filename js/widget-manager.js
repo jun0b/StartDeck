@@ -372,6 +372,7 @@ const WidgetManager = {
       { type: 'network', name: 'ネットワーク計算機', icon: '<svg viewBox="0 0 24 24"><path d="M4 11h16M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm5 10v2m6-2v2M8 11v4m8-4v4"/></svg>' },
       { type: 'top-sites', name: 'よく見るサイト', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>' },
       { type: 'system', name: 'システムリソース', icon: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><line x1="9" y1="9" x2="9" y2="15"/><line x1="12" y1="7" x2="12" y2="17"/><line x1="15" y1="11" x2="15" y2="13"/></svg>' },
+      { type: 'ip', name: 'インターネット接続性', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>' },
     ];
 
     const overlay = document.createElement('div');
