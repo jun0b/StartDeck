@@ -8,6 +8,7 @@ const App = {
     await WidgetManager._applyBackground();
     this._bindGlobalEvents();
     this._initSettingsPanel();
+    this._initIdleDetection();
 
     if (!WidgetManager.layout.widgets || WidgetManager.layout.widgets.length === 0) {
       this._setupDefaultWidgets();
@@ -293,6 +294,109 @@ const App = {
         alert('インポートに失敗しました: ' + err.message);
       }
     });
+  },
+
+  _initIdleDetection() {
+    const idleCheck = document.getElementById('setting-idle-enabled');
+    const idleTimeInput = document.getElementById('setting-idle-time');
+    const idleGroup = document.getElementById('idle-time-group');
+    const idleTestBtn = document.getElementById('setting-idle-test');
+    let idleTimeout;
+    let clockInterval;
+    let lastTestStartTime = 0; // テスト開始時のタイムスタンプを保持
+
+    const resetTimer = (e) => {
+      // テストボタンをクリックした直後（1秒間）の操作は無視する
+      if (Date.now() - lastTestStartTime < 1000) return;
+
+      // テストボタン自体の操作も常に無視する
+      if (e && e.target && e.target.closest && e.target.closest('#setting-idle-test')) return;
+
+      if (document.body.classList.contains('is-idle')) {
+        document.body.classList.remove('is-idle');
+        clearInterval(clockInterval);
+      }
+      clearTimeout(idleTimeout);
+      
+      const enabled = WidgetManager.layout.idleEnabled || false;
+      const mins = parseInt(WidgetManager.layout.idleTime || 5);
+      
+      if (enabled && mins > 0) {
+        idleTimeout = setTimeout(goIdle, mins * 60 * 1000);
+      }
+    };
+
+    const goIdle = () => {
+      const active = document.activeElement;
+      if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) {
+        resetTimer();
+        return;
+      }
+      // テスト時、設定パネルなどは閉じる
+      document.querySelector('.settings-panel')?.classList.remove('open');
+      document.body.classList.add('is-idle');
+      updateIdleClock();
+      clockInterval = setInterval(updateIdleClock, 1000); // 秒表示のため1秒おきに更新
+    };
+
+    const updateIdleClock = () => {
+      const now = new Date();
+      const clockEl = document.getElementById('idle-clock');
+      const dateEl = document.getElementById('idle-date');
+      if (clockEl) {
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        const ss = String(now.getSeconds()).padStart(2, '0');
+        clockEl.textContent = `${hh}:${mm}:${ss}`;
+      }
+      if (dateEl) {
+        const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+        const m = now.getMonth() + 1;
+        const d = now.getDate();
+        const day = days[now.getDay()];
+        dateEl.textContent = `${m}/${d} ${day}`;
+      }
+    };
+
+    // 初期値反映
+    const isEnabled = WidgetManager.layout.idleEnabled || false;
+    if (idleCheck) {
+      idleCheck.checked = isEnabled;
+      if (idleGroup) idleGroup.style.display = isEnabled ? 'block' : 'none';
+
+      idleCheck.addEventListener('change', () => {
+        const checked = idleCheck.checked;
+        WidgetManager.layout.idleEnabled = checked;
+        if (idleGroup) idleGroup.style.display = checked ? 'block' : 'none';
+        WidgetManager.saveLayout();
+        resetTimer();
+      });
+    }
+
+    if (idleTimeInput) {
+      idleTimeInput.value = WidgetManager.layout.idleTime || 5;
+      idleTimeInput.addEventListener('change', () => {
+        let val = parseInt(idleTimeInput.value);
+        if (isNaN(val) || val < 1) val = 1;
+        idleTimeInput.value = val;
+        WidgetManager.layout.idleTime = val;
+        WidgetManager.saveLayout();
+        resetTimer();
+      });
+    }
+
+    // テストボタン
+    idleTestBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      lastTestStartTime = Date.now();
+      goIdle();
+    });
+
+    ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'].forEach(evt => {
+      document.addEventListener(evt, resetTimer, { capture: true, passive: true });
+    });
+
+    resetTimer();
   }
 };
 

@@ -19,46 +19,54 @@
       <!-- Background -->
       <div class="app-background"></div>
 
-      <!-- Header -->
-      <header class="app-header">
-        <div class="app-header__left">
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            style="color: var(--accent-primary)"
-          >
-            <rect x="3" y="3" width="7" height="7"></rect>
-            <rect x="14" y="3" width="7" height="7"></rect>
-            <rect x="14" y="14" width="7" height="7"></rect>
-            <rect x="3" y="14" width="7" height="7"></rect>
-          </svg>
-          <span class="app-header__title">StartDeck</span>
-        </div>
-        <div class="app-header__right">
-          <button class="header-btn" id="settings-toggle">
-            <svg viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="3"></circle>
-              <path
-                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
-              ></path>
+      <div class="app-content">
+        <!-- Header -->
+        <header class="app-header">
+          <div class="app-header__left">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              style="color: var(--accent-primary)"
+            >
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
             </svg>
-          </button>
+            <span class="app-header__title">StartDeck</span>
+          </div>
+          <div class="app-header__right">
+            <button class="header-btn" id="settings-toggle">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path
+                  d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1-2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+                ></path>
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <!-- Search Bar -->
+        <div class="search-container" id="search-container"></div>
+
+        <!-- Dashboard -->
+        <div class="dashboard" id="dashboard">
+          <!-- Background Attribution -->
+          <div class="app-bg-attribution" id="bg-attribution"></div>
         </div>
-      </header>
+      </div>
 
-      <!-- Search Bar -->
-      <div class="search-container" id="search-container"></div>
-
-      <!-- Dashboard -->
-      <div class="dashboard" id="dashboard">
-        <!-- Background Attribution -->
-        <div class="app-bg-attribution" id="bg-attribution"></div>
+      <!-- Idle Overlay -->
+      <div class="idle-overlay" id="idle-overlay">
+        <div class="idle-clock" id="idle-clock">00:00</div>
+        <div class="idle-date" id="idle-date"></div>
       </div>
     </div>
 
@@ -105,6 +113,19 @@
             <span id="val-widget-blur" style="font-size: 0.72rem; color: var(--text-tertiary); font-family: var(--font-mono, monospace);">20px</span>
           </div>
           <input type="range" id="setting-widget-blur" min="0" max="40" step="1" value="20" style="width: 100%; cursor: pointer;">
+        </div>
+        <div class="form-group">
+          <label class="form-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" id="setting-idle-enabled" style="width: auto; cursor: pointer;">
+            離席時スクリーンセーバーを表示
+          </label>
+        </div>
+        <div class="form-group" id="idle-time-group" style="display: none; margin-left: 26px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <input class="form-input" id="setting-idle-time" type="number" min="1" max="1440" value="5" style="width: 80px; text-align: center;">
+            <span class="form-label" style="margin-bottom: 0;">分後に表示</span>
+          </div>
+          <button class="btn btn--ghost" id="setting-idle-test" style="width: 100%; margin-top: 8px; font-size: 0.72rem; padding: 4px;">今すぐテスト表示する</button>
         </div>
       </div>
 

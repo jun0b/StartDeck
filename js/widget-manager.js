@@ -169,7 +169,9 @@ const WidgetManager = {
       widgets: [],
       background: { type: 'auto', url: '', autoSource: 'unsplash' },
       opacity: 0.72,
-      blur: 20
+      blur: 20,
+      idleEnabled: false,
+      idleTime: 5
     };
   },
 

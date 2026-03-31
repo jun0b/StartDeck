@@ -2095,6 +2095,57 @@ input[type="file"]::file-selector-button:hover {
   }
 }
 
+/* ---------- Idle Overlay (Screensaver) ---------- */
+.idle-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  background: transparent;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+}
+
+.idle-clock {
+  font-size: 7rem;
+  font-weight: 200;
+  color: #fff;
+  text-shadow: 0 4px 30px rgba(0,0,0,0.5);
+  letter-spacing: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.idle-date {
+  font-size: 1.5rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-top: 10px;
+  text-shadow: 0 2px 15px rgba(0,0,0,0.5);
+}
+
+.is-idle .app-content {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1.2s ease-in-out;
+}
+
+.is-idle .idle-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.is-idle .app-bg-attribution {
+  bottom: 30px;
+  right: 50%;
+  transform: translateX(50%);
+  background: rgba(0,0,0,0.2);
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
 /* ---------- Scrollbar ---------- */
 ::-webkit-scrollbar {
   width: 6px;
