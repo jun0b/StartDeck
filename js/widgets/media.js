@@ -103,9 +103,46 @@ class MediaWidget extends WidgetBase {
     const durationStr = this._formatTime(d.duration || 0);
     const progress = d.duration > 0 ? ((d.currentTime / d.duration) * 100) : 0;
 
+    const currentId = `${d.title || ''}-${d.artist || ''}-${d.artwork || ''}`;
+    const currentPlayer = body.querySelector('.media-widget__player');
+
+    // トラック情報が変わっていない場合はDOMを全削除せず、プログレスや再生状態だけ部分更新する（ホバーのちらつき防止）
+    if (currentPlayer && body.dataset.trackId === currentId) {
+      const fill = body.querySelector('.media-widget__progress-fill');
+      const input = body.querySelector(`#media-seek-${this.id}`);
+      const times = body.querySelectorAll('.media-widget__time span');
+      const playBtn = body.querySelector('.media-widget__btn--play');
+
+      if (fill) fill.style.width = `${progress}%`;
+      if (input && !this._seeking) {
+        input.max = Math.floor(d.duration || 0);
+        input.value = Math.floor(d.currentTime || 0);
+      }
+      if (times.length >= 2) {
+        times[0].textContent = currentStr;
+        times[1].textContent = durationStr;
+      }
+      if (playBtn) {
+        playBtn.title = d.isPlaying ? '一時停止' : '再生';
+        playBtn.innerHTML = d.isPlaying
+          ? '<svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+          : '<svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+      }
+      return;
+    }
+
+    body.dataset.trackId = currentId;
+
     body.innerHTML = `
       <div class="media-widget__player">
-        ${d.artwork ? `<img class="media-widget__artwork media-widget__goto-tab" src="${this._escapeHtml(d.artwork)}" alt="" loading="lazy" data-hide-on-error="true" title="タブに移動" style="cursor:pointer">` : ''}
+        ${d.artwork ? `
+          <div class="media-widget__artwork media-widget__artwork-container" style="position:relative; overflow:hidden;">
+            <img class="media-widget__goto-tab" src="${this._escapeHtml(d.artwork)}" alt="" loading="lazy" data-hide-on-error="true" title="タブに移動" style="cursor:pointer; width:100%; height:100%; object-fit:cover; border-radius:inherit; display:block;">
+            <div class="media-widget__pip-btn" title="PiPで表示" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.6);color:white;border-radius:50%;padding:4px;cursor:pointer;opacity:0;transition:opacity 0.2s;display:flex;backdrop-filter:blur(4px);z-index:2;">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><rect x="12" y="11" width="8" height="6" rx="1" ry="1"/></svg>
+            </div>
+          </div>
+        ` : ''}
         <div class="media-widget__info">
           <div class="media-widget__title media-widget__goto-tab" style="cursor:pointer" title="タブに移動">${this._escapeHtml(d.title || '不明な曲')}</div>
           ${d.artist ? `<div class="media-widget__artist">${this._escapeHtml(d.artist)}</div>` : ''}
@@ -149,6 +186,47 @@ class MediaWidget extends WidgetBase {
         }
       });
     });
+
+    // PiPボタンバインド
+    const pipBtn = body.querySelector('.media-widget__pip-btn');
+    if (pipBtn) {
+      pipBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!this._tabId) return;
+
+        chrome.scripting.executeScript({
+          target: { tabId: this._tabId },
+          func: () => {
+            const video = document.querySelector('video');
+            if (!video) {
+              console.warn('PiP: <video> element not found');
+              return;
+            }
+            if (document.pictureInPictureElement) {
+              document.exitPictureInPicture().catch(console.error);
+            } else {
+              video.requestPictureInPicture().catch(console.error);
+            }
+          }
+        }).catch(console.error);
+      });
+    }
+
+    // ホバーエフェクトのCSS追加（もし存在しなければ）
+    if (!document.getElementById('media-pip-style')) {
+      const style = document.createElement('style');
+      style.id = 'media-pip-style';
+      style.textContent = `
+        .media-widget__artwork-container:hover .media-widget__pip-btn {
+          opacity: 1 !important;
+        }
+        .media-widget__pip-btn:hover {
+          background: rgba(0,0,0,0.8) !important;
+        }
+      `;
+      document.head.appendChild(style);
+    }
 
     // コントロールボタンバインド
     body.querySelectorAll('.media-widget__btn').forEach(btn => {
