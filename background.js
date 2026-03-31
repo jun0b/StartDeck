@@ -165,7 +165,12 @@ function scrapeMediaInfo() {
       const video = document.querySelector('video, audio');
       const currentTime = video ? video.currentTime : 0;
       const rawDuration = video ? video.duration : 0;
-      const isLive = !isFinite(rawDuration) || rawDuration === 0;
+      const host = window.location.hostname;
+      
+      let isLive = !isFinite(rawDuration) || rawDuration === 0;
+      if (!isLive && host.includes('youtube.com') && document.querySelector('.ytp-live')) {
+        isLive = true;
+      }
 
       if (meta.title) {
         return {
@@ -186,7 +191,11 @@ function scrapeMediaInfo() {
     if (!video) return null;
 
     const rawDur = video.duration;
-    const isLive = !isFinite(rawDur) || rawDur === 0;
+    let isLive = !isFinite(rawDur) || rawDur === 0;
+    if (!isLive && host.includes('youtube.com') && document.querySelector('.ytp-live')) {
+      isLive = true;
+    }
+
     const d = {
       title: '', artist: '', artwork: '',
       isPlaying: !video.paused,
