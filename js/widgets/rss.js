@@ -223,9 +223,9 @@ class RSSWidget extends WidgetBase {
     const allArticles = this._articles[tabIdx] || [];
 
     articles.forEach(el => {
-      let timer;
       el.addEventListener('mouseenter', (e) => {
-        timer = setTimeout(() => {
+        clearTimeout(this._hideTimer);
+        this._hoverTimer = setTimeout(() => {
           const idx = parseInt(el.dataset.idx);
           const data = allArticles[idx];
           if (data) this._showPopup(el, data);
@@ -233,8 +233,10 @@ class RSSWidget extends WidgetBase {
       });
 
       el.addEventListener('mouseleave', () => {
-        clearTimeout(timer);
-        this._hidePopup();
+        clearTimeout(this._hoverTimer);
+        this._hideTimer = setTimeout(() => {
+          this._hidePopup();
+        }, 300);
       });
     });
   }
@@ -280,11 +282,9 @@ class RSSWidget extends WidgetBase {
     popup.classList.add('visible');
 
     // ポップアップ自体にマウスが乗っている間は消さない
-    popup.onmouseenter = () => {
-      popup.classList.add('visible');
-    };
+    popup.onmouseenter = () => clearTimeout(this._hideTimer);
     popup.onmouseleave = () => {
-      this._hidePopup();
+      this._hideTimer = setTimeout(() => this._hidePopup(), 300);
     };
   }
 

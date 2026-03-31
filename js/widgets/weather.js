@@ -123,15 +123,17 @@ class WeatherWidget extends WidgetBase {
     const current = this.element?.querySelector(`#weather-current-${this.id}`);
     if (!current) return;
 
-    let timer;
     current.addEventListener('mouseenter', () => {
-      timer = setTimeout(() => {
+      clearTimeout(this._hideTimer);
+      this._hoverTimer = setTimeout(() => {
         this._showPopup(current, data);
       }, 400);
     });
     current.addEventListener('mouseleave', () => {
-      clearTimeout(timer);
-      this._hidePopup();
+      clearTimeout(this._hoverTimer);
+      this._hideTimer = setTimeout(() => {
+        this._hidePopup();
+      }, 300);
     });
   }
 
@@ -185,6 +187,11 @@ class WeatherWidget extends WidgetBase {
     popup.style.top = `${top + window.scrollY}px`;
     popup.style.width = '250px';
     popup.classList.add('visible');
+
+    popup.onmouseenter = () => clearTimeout(this._hideTimer);
+    popup.onmouseleave = () => {
+      this._hideTimer = setTimeout(() => this._hidePopup(), 300);
+    };
   }
 
   _hidePopup() {

@@ -130,17 +130,19 @@ class StockWidget extends WidgetBase {
   _bindHovers(listEl, quotes) {
     const items = listEl.querySelectorAll('.stock-item');
     items.forEach(el => {
-      let timer;
       el.addEventListener('mouseenter', () => {
-        timer = setTimeout(() => {
+        clearTimeout(this._hideTimer);
+        this._hoverTimer = setTimeout(() => {
           const idx = parseInt(el.dataset.idx);
           const data = quotes[idx];
           if (data) this._showPopup(el, data);
         }, 400);
       });
       el.addEventListener('mouseleave', () => {
-        clearTimeout(timer);
-        this._hidePopup();
+        clearTimeout(this._hoverTimer);
+        this._hideTimer = setTimeout(() => {
+          this._hidePopup();
+        }, 300);
       });
     });
   }
@@ -199,6 +201,11 @@ class StockWidget extends WidgetBase {
     popup.style.top = `${top + window.scrollY}px`;
     popup.style.width = '300px';
     popup.classList.add('visible');
+
+    popup.onmouseenter = () => clearTimeout(this._hideTimer);
+    popup.onmouseleave = () => {
+      this._hideTimer = setTimeout(() => this._hidePopup(), 300);
+    };
   }
 
   _hidePopup() {
