@@ -33,8 +33,18 @@ class RSSWidget extends WidgetBase {
       return `<div class="empty-state" style="padding:20px 0">フィードがありません<br><span style="font-size:0.72rem;color:var(--text-tertiary);margin-top:4px;display:inline-block">「･･･」メニューからフィードを追加してください</span></div>`;
     }
 
-    const active = Math.min(this.config.activeTab || 0, feeds.length - 1);
-    const tabs = feeds.map((f, i) => {
+    let active = this.config.activeTab !== undefined ? this.config.activeTab : (feeds.length > 1 ? -1 : 0);
+    if (active >= feeds.length) active = feeds.length - 1;
+
+    let tabs = '';
+    if (feeds.length > 1) {
+      tabs += `<div class="rss-tab ${active === -1 ? 'active' : ''}" data-idx="-1" title="すべての記事">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:2px"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        <span>すべて</span>
+      </div>`;
+    }
+
+    tabs += feeds.map((f, i) => {
       let pageUrl = f.url;
       try { pageUrl = new URL(f.url).origin; } catch {}
       const u = new URL(chrome.runtime.getURL("/_favicon/"));
@@ -76,82 +86,118 @@ class RSSWidget extends WidgetBase {
         this._currentPage = 0;
         this.save();
 
-        const feed = (this.config.feeds || [])[targetIdx];
-        if (feed) {
-          const listEl = this.element.querySelector(`#rss-list-${this.id}`);
-          if (listEl) listEl.innerHTML = '<div class="loading-spinner"></div>';
-          const pagEl = this.element.querySelector(`#rss-pagination-${this.id}`);
-          if (pagEl) pagEl.innerHTML = '';
-          this._loadFeed(feed, targetIdx);
+        const listEl = this.element.querySelector(`#rss-list-${this.id}`);
+        const pagEl = this.element.querySelector(`#rss-pagination-${this.id}`);
+        if (listEl) listEl.innerHTML = '<div class="loading-spinner"></div>';
+        if (pagEl) pagEl.innerHTML = '';
+
+        if (targetIdx === -1) {
+          this._loadAllFeeds();
+        } else {
+          const feed = (this.config.feeds || [])[targetIdx];
+          if (feed) this._loadFeed(feed, targetIdx);
         }
       });
     });
 
-    const activeIdx = this.config.activeTab || 0;
-    const feed = (this.config.feeds || [])[activeIdx];
-    if (feed) this._loadFeed(feed, activeIdx);
+    const activeIdx = this.config.activeTab !== undefined ? this.config.activeTab : ((this.config.feeds || []).length > 1 ? -1 : 0);
+    if (activeIdx === -1) {
+      this._loadAllFeeds();
+    } else {
+      const feed = (this.config.feeds || [])[activeIdx];
+      if (feed) this._loadFeed(feed, activeIdx);
+    }
   }
 
-  async _loadFeed(feed, idx) {
-    const listEl = this.element?.querySelector(`#rss-list-${this.id}`);
-    if (!listEl) return;
-
+  async _fetchFeedData(feed) {
     const cacheKey = `rss_cache_${feed.url}`;
     const cached = await Storage.get(cacheKey, null);
     const now = Date.now();
 
     if (cached && cached.articles && (now - cached.timestamp < 600000)) {
-      this._articles[idx] = cached.articles;
-      this._renderArticles(listEl);
-      return;
+      cached.articles.forEach(a => {
+        if (!a.feedName) a.feedName = feed.name;
+      });
+      return cached.articles;
     }
 
-    try {
-      let text;
-      // Service Worker経由でfetch（CORSバイパス）
-      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-        const response = await chrome.runtime.sendMessage({ action: 'proxyFetch', url: feed.url });
-        if (response && response.ok) {
-          text = response.data;
-        } else {
-          throw new Error(response?.error || 'Fetch failed');
-        }
+    let text;
+    // Service Worker経由でfetch（CORSバイパス）
+    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+      const response = await chrome.runtime.sendMessage({ action: 'proxyFetch', url: feed.url });
+      if (response && response.ok) {
+        text = response.data;
       } else {
-        // フォールバック: 直接fetch（file://で開いた場合等）
-        const res = await fetch(feed.url);
-        text = await res.text();
+        throw new Error(response?.error || 'Fetch failed');
       }
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(text, 'text/xml');
+    } else {
+      // フォールバック: 直接fetch（file://で開いた場合等）
+      const res = await fetch(feed.url);
+      text = await res.text();
+    }
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(text, 'text/xml');
 
-      const articles = [];
-      const items = doc.querySelectorAll('item, entry');
-      items.forEach(item => {
-        const title = item.querySelector('title')?.textContent || '';
-        const link = item.querySelector('link')?.textContent || item.querySelector('link')?.getAttribute('href') || '';
-        const desc = item.querySelector('description, summary, content')?.textContent || '';
-        const pubDate = item.querySelector('pubDate, published, updated')?.textContent || '';
-        let thumb = '';
-        const enclosure = item.querySelector('enclosure[type^="image"], media\\:content, media\\:thumbnail');
-        if (enclosure) thumb = enclosure.getAttribute('url') || '';
-        if (!thumb) {
-          const imgMatch = desc.match(/<img[^>]+src=["']([^"']+)["']/);
-          if (imgMatch) thumb = imgMatch[1];
-        }
+    const articles = [];
+    const items = doc.querySelectorAll('item, entry');
+    items.forEach(item => {
+      const title = item.querySelector('title')?.textContent || '';
+      const link = item.querySelector('link')?.textContent || item.querySelector('link')?.getAttribute('href') || '';
+      const desc = item.querySelector('description, summary, content')?.textContent || '';
+      const pubDate = item.querySelector('pubDate, published, updated')?.textContent || '';
+      let thumb = '';
+      const enclosure = item.querySelector('enclosure[type^="image"], media\\:content, media\\:thumbnail');
+      if (enclosure) thumb = enclosure.getAttribute('url') || '';
+      if (!thumb) {
+        const imgMatch = desc.match(/<img[^>]+src=["']([^"']+)["']/);
+        if (imgMatch) thumb = imgMatch[1];
+      }
 
-        const fullDesc = this._stripHtml(desc);
-        articles.push({
-          title,
-          link,
-          desc: fullDesc.substring(0, 200),
-          fullDesc: fullDesc,
-          pubDate,
-          thumb
-        });
+      const fullDesc = this._stripHtml(desc);
+      articles.push({
+        title,
+        link,
+        desc: fullDesc.substring(0, 200),
+        fullDesc: fullDesc,
+        pubDate,
+        thumb,
+        feedName: feed.name // 統合表示用に追加
       });
+    });
 
-      this._articles[idx] = articles;
-      await Storage.set(cacheKey, { articles, timestamp: now });
+    await Storage.set(cacheKey, { articles, timestamp: now });
+    return articles;
+  }
+
+  async _loadFeed(feed, idx) {
+    const listEl = this.element?.querySelector(`#rss-list-${this.id}`);
+    if (!listEl) return;
+    try {
+      this._articles[idx] = await this._fetchFeedData(feed);
+      this._renderArticles(listEl);
+    } catch (e) {
+      listEl.innerHTML = `<div class="empty-state">フィードを読み込めませんでした<br><span style="font-size:0.72rem">${this._escapeHtml(e.message)}</span></div>`;
+    }
+  }
+
+  async _loadAllFeeds() {
+    const listEl = this.element?.querySelector(`#rss-list-${this.id}`);
+    if (!listEl) return;
+    try {
+      const feeds = this.config.feeds || [];
+      const results = await Promise.allSettled(feeds.map(f => this._fetchFeedData(f)));
+      const allArticles = [];
+      results.forEach(res => {
+        if (res.status === 'fulfilled') {
+          allArticles.push(...res.value);
+        }
+      });
+      // 日付の降順でソート
+      allArticles.sort((a, b) => {
+        return new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime();
+      });
+      
+      this._articles['-1'] = allArticles;
       this._renderArticles(listEl);
     } catch (e) {
       listEl.innerHTML = `<div class="empty-state">フィードを読み込めませんでした<br><span style="font-size:0.72rem">${this._escapeHtml(e.message)}</span></div>`;
@@ -159,8 +205,8 @@ class RSSWidget extends WidgetBase {
   }
 
   _renderArticles(listEl) {
-    const idx = this.config.activeTab || 0;
-    const articles = this._articles[idx] || [];
+    const idx = this.config.activeTab !== undefined ? this.config.activeTab : ((this.config.feeds || []).length > 1 ? -1 : 0);
+    const articles = this._articles[String(idx)] || this._articles[idx] || [];
     const perPage = this.config.perPage || 7;
     const totalPages = Math.max(1, Math.ceil(articles.length / perPage));
     this._currentPage = Math.min(this._currentPage, totalPages - 1);
@@ -177,7 +223,7 @@ class RSSWidget extends WidgetBase {
           <div class="rss-article__content">
             <div class="rss-article__title">${this._escapeHtml(a.title)}</div>
             <div class="rss-article__summary">
-              <span class="rss-article__date">${timeAgo}</span>
+              <span class="rss-article__date">${Number(idx) === -1 && a.feedName ? `<span style="opacity:0.8;font-weight:600">[${this._escapeHtml(a.feedName)}]</span> ` : ''}${timeAgo}</span>
               ${a.desc ? ` — ${this._escapeHtml(a.desc)}` : ''}
             </div>
           </div>
