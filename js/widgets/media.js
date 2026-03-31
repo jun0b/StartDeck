@@ -147,8 +147,8 @@ class MediaWidget extends WidgetBase {
           </div>
         ` : ''}
         <div class="media-widget__info">
-          <div class="media-widget__title media-widget__goto-tab" style="cursor:pointer" title="タブに移動">${this._escapeHtml(d.title || '不明な曲')}</div>
-          ${d.artist ? `<div class="media-widget__artist">${this._escapeHtml(d.artist)}</div>` : ''}
+          <div class="media-widget__title media-widget__goto-tab" style="cursor:pointer" title="${this._escapeHtml(d.title || '不明な曲')}">${this._escapeHtml(d.title || '不明な曲')}</div>
+          ${d.artist ? `<div class="media-widget__artist" title="${this._escapeHtml(d.artist)}">${this._escapeHtml(d.artist)}</div>` : ''}
         </div>
         <div class="media-widget__progress" style="margin-bottom: 4px;">
           ${isLive ? `
