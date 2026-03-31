@@ -634,10 +634,10 @@ const WidgetManager = {
             </button>`;
 
           if (bgConfig.type === 'nasa') {
-            attribution.innerHTML = `Background: <a href="https://apod.nasa.gov/" target="_blank">NASA APOD</a> ${refreshBtn}`;
+            attribution.innerHTML = `Background: <a href="https://apod.nasa.gov/">NASA APOD</a> ${refreshBtn}`;
             attribution.style.opacity = '1';
           } else if (bgConfig.type === 'auto') {
-            attribution.innerHTML = `Background: <a href="https://unsplash.com/" target="_blank">Unsplash</a> ${refreshBtn}`;
+            attribution.innerHTML = `Background: <a href="https://unsplash.com/">Unsplash</a> ${refreshBtn}`;
             attribution.style.opacity = '1';
           } else {
             attribution.style.opacity = '0';

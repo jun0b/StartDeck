@@ -109,7 +109,7 @@ class StockWidget extends WidgetBase {
           : `https://finance.yahoo.com/quote/${encodeURIComponent(q.symbol)}`;
 
         return `
-          <a href="${stockUrl}" target="_blank" class="stock-item" data-idx="${validQuotes.indexOf(q)}">
+          <a href="${stockUrl}" class="stock-item" data-idx="${validQuotes.indexOf(q)}">
             <div>
               <div class="stock-item__symbol">${this._escapeHtml(q.symbol)}</div>
               <div class="stock-item__name">${this._escapeHtml(q.name)}</div>

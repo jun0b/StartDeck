@@ -251,7 +251,7 @@ class CalendarWidget extends WidgetBase {
     if (!text) return '';
     const escaped = this._escapeHtml(text);
     const urlRegex = /(https?:\/\/[^\s<]+)/g;
-    return escaped.replace(urlRegex, '<a href="$1" target="_blank" style="color:var(--accent-primary);text-decoration:underline">$1</a>');
+    return escaped.replace(urlRegex, '<a href="$1" style="color:var(--accent-primary);text-decoration:underline">$1</a>');
   }
 
   _formatDescription(text) {
@@ -263,7 +263,7 @@ class CalendarWidget extends WidgetBase {
       // 拡張機能はCSP(Script Src 'self')が適用されているためinnerHTMLでもスクリプト実行はブロックされるので比較的安全
       temp.innerHTML = text;
       temp.querySelectorAll('a').forEach(a => {
-        a.target = '_blank'; // 新しいタブで開く
+        // a.target = '_blank'; // 今回の対応で新規タブでは開かないように削除
         a.style.color = 'var(--accent-primary)';
         a.style.textDecoration = 'underline';
       });
