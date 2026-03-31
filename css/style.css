@@ -2066,6 +2066,15 @@ input[type="file"]::file-selector-button:hover {
   }
 }
 
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
 @keyframes slideInRight {
   from {
     transform: translateX(100%);

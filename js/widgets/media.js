@@ -99,29 +99,32 @@ class MediaWidget extends WidgetBase {
     const d = this._mediaState;
     if (!d) return;
 
-    const currentStr = this._formatTime(d.currentTime || 0);
-    const durationStr = this._formatTime(d.duration || 0);
-    const progress = d.duration > 0 ? ((d.currentTime / d.duration) * 100) : 0;
+    const isLive = d.isLive || (!d.duration || d.duration <= 0);
+    const currentStr = isLive ? '' : this._formatTime(d.currentTime || 0);
+    const durationStr = isLive ? '' : this._formatTime(d.duration || 0);
+    const progress = (!isLive && d.duration > 0) ? ((d.currentTime / d.duration) * 100) : 0;
 
     const currentId = `${d.title || ''}-${d.artist || ''}-${d.artwork || ''}`;
     const currentPlayer = body.querySelector('.media-widget__player');
 
     // トラック情報が変わっていない場合はDOMを全削除せず、プログレスや再生状態だけ部分更新する（ホバーのちらつき防止）
     if (currentPlayer && body.dataset.trackId === currentId) {
-      const fill = body.querySelector('.media-widget__progress-fill');
-      const input = body.querySelector(`#media-seek-${this.id}`);
-      const times = body.querySelectorAll('.media-widget__time span');
-      const playBtn = body.querySelector('.media-widget__btn--play');
+      if (!isLive) {
+        const fill = body.querySelector('.media-widget__progress-fill');
+        const input = body.querySelector(`#media-seek-${this.id}`);
+        const times = body.querySelectorAll('.media-widget__time span');
 
-      if (fill) fill.style.width = `${progress}%`;
-      if (input && !this._seeking) {
-        input.max = Math.floor(d.duration || 0);
-        input.value = Math.floor(d.currentTime || 0);
+        if (fill) fill.style.width = `${progress}%`;
+        if (input && !this._seeking) {
+          input.max = Math.floor(d.duration || 0);
+          input.value = Math.floor(d.currentTime || 0);
+        }
+        if (times.length >= 2) {
+          times[0].textContent = currentStr;
+          times[1].textContent = durationStr;
+        }
       }
-      if (times.length >= 2) {
-        times[0].textContent = currentStr;
-        times[1].textContent = durationStr;
-      }
+      const playBtn = body.querySelector('.media-widget__btn--play');
       if (playBtn) {
         playBtn.title = d.isPlaying ? '一時停止' : '再生';
         playBtn.innerHTML = d.isPlaying
@@ -147,15 +150,26 @@ class MediaWidget extends WidgetBase {
           <div class="media-widget__title media-widget__goto-tab" style="cursor:pointer" title="タブに移動">${this._escapeHtml(d.title || '不明な曲')}</div>
           ${d.artist ? `<div class="media-widget__artist">${this._escapeHtml(d.artist)}</div>` : ''}
         </div>
-        <div class="media-widget__progress">
-          <div class="media-widget__progress-bar" id="media-progress-${this.id}">
-            <div class="media-widget__progress-fill" style="width:${progress}%"></div>
-            <input type="range" class="media-widget__progress-input" min="0" max="${Math.floor(d.duration || 0)}" value="${Math.floor(d.currentTime || 0)}" id="media-seek-${this.id}">
-          </div>
-          <div class="media-widget__time">
-            <span>${currentStr}</span>
-            <span>${durationStr}</span>
-          </div>
+        <div class="media-widget__progress" style="margin-bottom: 4px;">
+          ${isLive ? `
+            <div class="media-widget__live-container" style="display:flex;align-items:center;gap:10px;padding:0 4px;">
+              <div style="flex:1;height:2px;background:rgba(255,255,255,0.1);border-radius:1px;"></div>
+              <div class="media-widget__live-badge" style="display:flex;align-items:center;gap:6px;color:#ef4444;font-size:0.75rem;font-weight:600;letter-spacing:0.03em;white-space:nowrap;">
+                <span style="width:6px;height:6px;background:#ef4444;border-radius:50%;display:inline-block;animation:pulse 1.5s ease-in-out infinite;"></span>
+                LIVE
+              </div>
+              <div style="flex:1;height:2px;background:rgba(255,255,255,0.1);border-radius:1px;"></div>
+            </div>
+          ` : `
+            <div class="media-widget__progress-bar" id="media-progress-${this.id}">
+              <div class="media-widget__progress-fill" style="width:${progress}%"></div>
+              <input type="range" class="media-widget__progress-input" min="0" max="${Math.floor(d.duration || 0)}" value="${Math.floor(d.currentTime || 0)}" id="media-seek-${this.id}">
+            </div>
+            <div class="media-widget__time">
+              <span>${currentStr}</span>
+              <span>${durationStr}</span>
+            </div>
+          `}
         </div>
         <div class="media-widget__controls">
           <button class="media-widget__btn" data-cmd="prev" title="前へ">

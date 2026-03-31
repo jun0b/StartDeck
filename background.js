@@ -164,7 +164,8 @@ function scrapeMediaInfo() {
 
       const video = document.querySelector('video, audio');
       const currentTime = video ? video.currentTime : 0;
-      const duration = video ? video.duration : 0;
+      const rawDuration = video ? video.duration : 0;
+      const isLive = !isFinite(rawDuration) || rawDuration === 0;
 
       if (meta.title) {
         return {
@@ -173,7 +174,8 @@ function scrapeMediaInfo() {
           artwork: artwork,
           isPlaying: video ? !video.paused : (navigator.mediaSession.playbackState === 'playing'),
           currentTime: currentTime,
-          duration: isNaN(duration) ? 0 : duration
+          duration: isLive ? 0 : rawDuration,
+          isLive: isLive
         };
       }
     }
@@ -183,11 +185,14 @@ function scrapeMediaInfo() {
     const video = document.querySelector('video, audio');
     if (!video) return null;
 
+    const rawDur = video.duration;
+    const isLive = !isFinite(rawDur) || rawDur === 0;
     const d = {
       title: '', artist: '', artwork: '',
       isPlaying: !video.paused,
       currentTime: video.currentTime || 0,
-      duration: isNaN(video.duration) ? 0 : video.duration
+      duration: isLive ? 0 : rawDur,
+      isLive: isLive
     };
 
     if (host.includes('youtube.com')) {
