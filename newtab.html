@@ -92,6 +92,20 @@
             <option value="4">4カラム</option>
           </select>
         </div>
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label class="form-label" style="margin-bottom: 0;">ウィジェットの透明度</label>
+            <span id="val-widget-opacity" style="font-size: 0.72rem; color: var(--text-tertiary); font-family: var(--font-mono, monospace);">72%</span>
+          </div>
+          <input type="range" id="setting-widget-opacity" min="0" max="100" step="1" value="72" style="width: 100%; cursor: pointer;">
+        </div>
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label class="form-label" style="margin-bottom: 0;">ブラーの強さ</label>
+            <span id="val-widget-blur" style="font-size: 0.72rem; color: var(--text-tertiary); font-family: var(--font-mono, monospace);">20px</span>
+          </div>
+          <input type="range" id="setting-widget-blur" min="0" max="40" step="1" value="20" style="width: 100%; cursor: pointer;">
+        </div>
       </div>
 
       <div class="settings-section">

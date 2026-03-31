@@ -160,6 +160,40 @@ const App = {
       });
     }
 
+    // --- 透明度とブラー ---
+    const opacitySlider = document.getElementById('setting-widget-opacity');
+    const opacityVal = document.getElementById('val-widget-opacity');
+    const blurSlider = document.getElementById('setting-widget-blur');
+    const blurVal = document.getElementById('val-widget-blur');
+
+    if (opacitySlider && opacityVal) {
+      const currentOpacity = WidgetManager.layout.opacity ?? 0.72;
+      opacitySlider.value = Math.round(currentOpacity * 100);
+      opacityVal.textContent = Math.round(currentOpacity * 100) + '%';
+      
+      opacitySlider.addEventListener('input', () => {
+        const val = parseInt(opacitySlider.value) / 100;
+        opacityVal.textContent = opacitySlider.value + '%';
+        WidgetManager.layout.opacity = val;
+        WidgetManager._applyWidgetStyles();
+        WidgetManager.saveLayout();
+      });
+    }
+
+    if (blurSlider && blurVal) {
+      const currentBlur = WidgetManager.layout.blur ?? 20;
+      blurSlider.value = currentBlur;
+      blurVal.textContent = currentBlur + 'px';
+      
+      blurSlider.addEventListener('input', () => {
+        const val = parseInt(blurSlider.value);
+        blurVal.textContent = val + 'px';
+        WidgetManager.layout.blur = val;
+        WidgetManager._applyWidgetStyles();
+        WidgetManager.saveLayout();
+      });
+    }
+
     // --- 背景設定 ---
     const bgTypeSelect = document.getElementById('setting-bg-type');
     const bgUrlInput = document.getElementById('setting-bg-url');

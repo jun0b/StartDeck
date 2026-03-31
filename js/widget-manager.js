@@ -146,6 +146,7 @@ const WidgetManager = {
     this._bindDragDrop();
     this._bindAddButtons();
     this._bindBackgroundEvents();
+    this._applyWidgetStyles();
   },
 
   _bindBackgroundEvents() {
@@ -166,8 +167,17 @@ const WidgetManager = {
     return {
       columns: 3,
       widgets: [],
-      background: { type: 'auto', url: '', autoSource: 'unsplash' }
+      background: { type: 'auto', url: '', autoSource: 'unsplash' },
+      opacity: 0.72,
+      blur: 20
     };
+  },
+
+  _applyWidgetStyles() {
+    const opacity = this.layout.opacity ?? 0.72;
+    const blur = this.layout.blur ?? 20;
+    document.documentElement.style.setProperty('--widget-opacity', opacity);
+    document.documentElement.style.setProperty('--widget-blur', blur + 'px');
   },
 
   _renderColumns() {
