@@ -68,8 +68,17 @@ class CalendarWidget extends WidgetBase {
     const endDate = new Date(todayStart);
     endDate.setDate(endDate.getDate() + (this.config.daysAhead || 7));
 
+    // 重複を排除（同じ件名、開始時間、終了時間のイベントが複数ある場合に1つにする）
+    const seen = new Set();
+    const uniqueEvents = allEvents.filter(e => {
+      const key = `${e.summary}|${e.start?.getTime()}|${e.end?.getTime()}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
     // フィルター: 今日の過去イベントや終日イベントが消えないように調整
-    const filtered = allEvents
+    const filtered = uniqueEvents
       .filter(e => {
         let eventEnd = e.end;
         if (!eventEnd) {
