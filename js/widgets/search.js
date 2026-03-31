@@ -135,7 +135,7 @@ const SearchManager = {
           <button class="modal__close">&times;</button>
         </div>
         <div class="modal__body">
-          <div id="engine-list" style="margin-bottom:16px;max-height:300px;overflow-y:auto">
+          <div id="engine-list" style="margin-bottom:16px;max-height:300px;overflow-y:auto;overscroll-behavior:contain">
             ${this.engines.map((e, i) => `
               <div class="draggable-item" draggable="true" data-idx="${i}" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border-color);cursor:grab">
                 <span style="font-size:0.8rem;color:var(--text-tertiary)">≡</span>
