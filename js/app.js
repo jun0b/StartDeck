@@ -205,21 +205,28 @@ const App = {
     const bgColorInput = document.getElementById('setting-bg-color');
     const bgColorHex = document.getElementById('setting-bg-color-hex');
 
+    const bgIntervalGroup = document.getElementById('bg-interval-group');
+    const bgIntervalInput = document.getElementById('setting-bg-interval');
+
     const updateBgUI = (type) => {
       if (bgUrlGroup) bgUrlGroup.style.display = (type === 'custom') ? '' : 'none';
       if (bgFileGroup) bgFileGroup.style.display = (type === 'custom') ? '' : 'none';
       if (bgColorGroup) bgColorGroup.style.display = (type === 'solid') ? '' : 'none';
+      if (bgIntervalGroup) bgIntervalGroup.style.display = (type === 'auto') ? '' : 'none';
     };
 
     // 背景をリアルタイム適用する共通関数
     const applyBgNow = async () => {
       const type = bgTypeSelect?.value || 'auto';
       const url = bgUrlInput?.value || '';
+      const interval = parseInt(bgIntervalInput?.value || '60');
+
       if (type === 'custom' && url) {
         await WidgetManager.setBackground('custom', url);
-      } else if (type === 'auto' || type === 'nasa') {
-        await Storage.remove('bg_cache');
-        await WidgetManager.setBackground(type, '');
+      } else if (type === 'auto') {
+        // 設定変更時はキャッシュを削除せず、設定のみを更新する
+        // (WidgetManager._applyBackgroundが内部でキャッシュの有効期限を判断する)
+        await WidgetManager.setBackground(type, '', '', interval);
       } else if (type === 'solid') {
         const color = bgColorInput?.value || '#111114';
         await WidgetManager.setBackground('solid', '', color);
@@ -242,6 +249,16 @@ const App = {
     if (bgUrlInput) {
       bgUrlInput.value = WidgetManager.layout.background?.url || '';
       bgUrlInput.addEventListener('change', () => applyBgNow()); // blur/Enter時
+    }
+
+    if (bgIntervalInput) {
+      bgIntervalInput.value = WidgetManager.layout.background?.bgInterval || 60;
+      bgIntervalInput.addEventListener('change', () => {
+        let val = parseInt(bgIntervalInput.value);
+        if (isNaN(val) || val < 1) val = 1;
+        bgIntervalInput.value = val;
+        applyBgNow();
+      });
     }
 
     // 背景色の初期値

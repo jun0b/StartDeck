@@ -184,7 +184,7 @@ const WidgetManager = {
     return {
       columns: 3,
       widgets: [],
-      background: { type: 'auto', url: '', autoSource: 'unsplash' },
+      background: { type: 'auto', url: '', autoSource: 'unsplash', bgInterval: 60 },
       opacity: 0.72,
       blur: 20,
       idleEnabled: false,
@@ -589,8 +589,15 @@ const WidgetManager = {
     setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
   },
 
-  async setBackground(type, value, color) {
-    this.layout.background = { type, url: value || '', color: color || '' };
+  async setBackground(type, value, color, interval) {
+    const bgConfig = this.layout.background || {};
+    this.layout.background = { 
+      ...bgConfig, 
+      type, 
+      url: value || '', 
+      color: color || '',
+      bgInterval: interval !== undefined ? interval : (bgConfig.bgInterval || 60)
+    };
     await this.saveLayout();
     this._applyBackground();
   },
@@ -606,49 +613,56 @@ const WidgetManager = {
 
     if (bgConfig.type === 'custom' && bgConfig.url) {
       bg.style.backgroundImage = `url("${bgConfig.url}")`;
-    } else if (bgConfig.type === 'auto' || bgConfig.type === 'nasa') {
+    } else if (bgConfig.type === 'auto') {
       try {
         const cacheKey = `bg_cache_${bgConfig.type}`;
         const cached = await Storage.get(cacheKey, null);
         const now = Date.now();
 
-        // キャッシュ有効期間: 1時間
-        if (cached && cached.url && (now - cached.timestamp < 3600000)) {
-          bg.style.backgroundImage = `url("${cached.url}")`;
+        let currentUrl = '';
+        let currentLink = '';
+        const intervalMs = (bgConfig.bgInterval || 60) * 60 * 1000;
+
+        // キャッシュ有効期間: 設定された間隔（分）を使用
+        if (cached && cached.url && (now - cached.timestamp < intervalMs)) {
+          currentUrl = cached.url;
+          currentLink = cached.linkUrl || 'https://unsplash.com/';
+          bg.style.backgroundImage = `url("${currentUrl}")`;
         } else {
-          let url = '';
-          if (bgConfig.type === 'nasa') {
-            const response = await chrome.runtime.sendMessage({ 
-              action: 'proxyFetch', 
-              url: 'https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY' 
-            });
-            if (response && response.ok) {
-              const data = JSON.parse(response.data);
-              if (data.media_type === 'image') {
-                url = data.hdurl || data.url;
-              } else {
-                url = 'https://picsum.photos/1920/1080';
+          try {
+            // プロキシを使わず直接fetchし、リダイレクト先のURLを取得する
+            const bgFetch = await fetch(`https://picsum.photos/1920/1080?sig=${now}`);
+            if (bgFetch.ok) {
+              currentUrl = bgFetch.url; // リダイレクト後の最終URL
+              currentLink = 'https://unsplash.com/'; // デフォルトのフォールバック
+              
+              // PicsumのURLからIDを抽出して、Unsplashの元画像リンクを取得する
+              const match = currentUrl.match(/\/id\/(\d+)\//);
+              if (match) {
+                const imageId = match[1];
+                try {
+                  const infoRes = await fetch(`https://picsum.photos/id/${imageId}/info`);
+                  if (infoRes.ok) {
+                    const infoData = await infoRes.json();
+                    if (infoData.url) {
+                      currentLink = infoData.url; // Unsplashの個別ページURL
+                    }
+                  }
+                } catch (infoErr) {
+                  console.warn('Failed to fetch image info:', infoErr);
+                }
               }
             }
-          } else {
-            const response = await chrome.runtime.sendMessage({ 
-              action: 'proxyFetch', 
-              url: 'https://picsum.photos/1920/1080' 
-            });
-            // Picsum はリダイレクト先のURLが画像になるため、リクエスト自体が成功すればOK
-            // ただし、プロキシ経由だとリダイレクト後のURL取得に工夫が必要な場合があるため
-            // ここでは直接の fetch が失敗する場合の確実な代案としてプロキシを通す
-            if (response && response.ok) {
-              // background.js の proxyFetch は text() を返すため、
-              // 画像URLそのものを取得するにはプロキシ側での対応が必要だが、
-              // 一旦ここでは標準的な取得フローに合わせる
-              url = 'https://picsum.photos/1920/1080?sig=' + now;
-            }
+          } catch (fetchErr) {
+            console.warn('Direct fetch failed, falling back:', fetchErr);
+            // 万が一のフォールバック
+            currentUrl = `https://picsum.photos/1920/1080?sig=${now}`;
+            currentLink = 'https://unsplash.com/';
           }
 
-          if (url) {
-            bg.style.backgroundImage = `url("${url}")`;
-            await Storage.set(cacheKey, { url, timestamp: now });
+          if (currentUrl) {
+            bg.style.backgroundImage = `url("${currentUrl}")`;
+            await Storage.set(cacheKey, { url: currentUrl, linkUrl: currentLink, timestamp: now });
           }
         }
 
@@ -664,11 +678,8 @@ const WidgetManager = {
               </svg>
             </button>`;
 
-          if (bgConfig.type === 'nasa') {
-            attribution.innerHTML = `Background: <a href="https://apod.nasa.gov/">NASA APOD</a> ${refreshBtn}`;
-            attribution.style.opacity = '1';
-          } else if (bgConfig.type === 'auto') {
-            attribution.innerHTML = `Background: <a href="https://unsplash.com/">Unsplash</a> ${refreshBtn}`;
+          if (bgConfig.type === 'auto') {
+            attribution.innerHTML = `Background: <a href="${currentLink}" target="_blank" rel="noopener noreferrer">Unsplash</a> ${refreshBtn}`;
             attribution.style.opacity = '1';
           } else {
             attribution.style.opacity = '0';

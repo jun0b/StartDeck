@@ -135,10 +135,16 @@
           <label class="form-label">背景タイプ</label>
           <select class="form-select" id="setting-bg-type">
             <option value="auto">自動取得（ランダム画像）</option>
-            <option value="nasa">NASA 今日の1枚</option>
             <option value="custom">カスタムURL</option>
             <option value="solid">単色</option>
           </select>
+        </div>
+        <div class="form-group" id="bg-interval-group">
+          <label class="form-label">更新間隔（分）</label>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <input class="form-input" id="setting-bg-interval" type="number" min="1" max="1440" value="60" style="width: 80px; text-align: center;">
+            <span class="form-label" style="margin-bottom: 0;">分ごとに更新</span>
+          </div>
         </div>
         <div class="form-group" id="bg-url-group">
           <label class="form-label">画像URL（カスタム時）</label>
