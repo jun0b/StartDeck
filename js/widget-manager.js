@@ -43,6 +43,7 @@ class WidgetBase {
   renderBody() { return '<div class="empty-state">コンテンツなし</div>'; }
   onMount() {}
   onDestroy() {}
+  onVisibilityChange(isVisible) {}
 
   getSettingsFields() { return []; }
 
@@ -146,7 +147,19 @@ const WidgetManager = {
     this._bindDragDrop();
     this._bindAddButtons();
     this._bindBackgroundEvents();
+    this._bindVisibilityEvents();
     this._applyWidgetStyles();
+  },
+
+  _bindVisibilityEvents() {
+    document.addEventListener('visibilitychange', () => {
+      const isVisible = document.visibilityState === 'visible';
+      Object.values(this.widgets).forEach(w => {
+        if (typeof w.onVisibilityChange === 'function') {
+          w.onVisibilityChange(isVisible);
+        }
+      });
+    });
   },
 
   _bindBackgroundEvents() {

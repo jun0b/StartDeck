@@ -392,6 +392,20 @@ const App = {
       goIdle();
     });
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        clearTimeout(idleTimeout);
+        if (clockInterval) {
+          clearInterval(clockInterval);
+          clockInterval = null;
+        }
+      } else {
+        resetTimer();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'].forEach(evt => {
       document.addEventListener(evt, resetTimer, { capture: true, passive: true });
     });

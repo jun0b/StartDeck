@@ -49,6 +49,20 @@ class ClockWidget extends WidgetBase {
     if (this._timer) clearInterval(this._timer);
   }
 
+  onVisibilityChange(isVisible) {
+    if (isVisible) {
+      this._updateClock();
+      if (!this._timer) {
+        this._timer = setInterval(() => this._updateClock(), 1000);
+      }
+    } else {
+      if (this._timer) {
+        clearInterval(this._timer);
+        this._timer = null;
+      }
+    }
+  }
+
   _updateClock() {
     const opts = {};
     if (this.config.timezone) opts.timeZone = this.config.timezone;

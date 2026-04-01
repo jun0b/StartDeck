@@ -83,6 +83,20 @@ class SystemWidget extends WidgetBase {
     this._timer = null;
   }
 
+  onVisibilityChange(isVisible) {
+    if (isVisible) {
+      this._updateStats();
+      if (!this._timer) {
+        this._timer = setInterval(() => this._updateStats(), (this.config.refreshInterval || 2) * 1000);
+      }
+    } else {
+      if (this._timer) {
+        clearInterval(this._timer);
+        this._timer = null;
+      }
+    }
+  }
+
   async _updateStats() {
     if (this.config.showCPU) await this._updateCpu();
     if (this.config.showMemory) await this._updateMemory();

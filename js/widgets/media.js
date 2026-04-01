@@ -39,6 +39,14 @@ class MediaWidget extends WidgetBase {
     this._stopPolling();
   }
 
+  onVisibilityChange(isVisible) {
+    if (isVisible) {
+      this._startPolling();
+    } else {
+      this._stopPolling();
+    }
+  }
+
   _startPolling() {
     this._stopPolling();
     this._pollMedia();

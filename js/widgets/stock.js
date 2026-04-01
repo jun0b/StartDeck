@@ -28,6 +28,21 @@ class StockWidget extends WidgetBase {
     if (this._timer) clearInterval(this._timer);
   }
 
+  onVisibilityChange(isVisible) {
+    if (isVisible) {
+      this._fetchStocks();
+      if (!this._timer) {
+        const interval = (this.config.refreshInterval || 60) * 1000;
+        this._timer = setInterval(() => this._fetchStocks(), interval);
+      }
+    } else {
+      if (this._timer) {
+        clearInterval(this._timer);
+        this._timer = null;
+      }
+    }
+  }
+
   async _fetchStocks() {
     const listEl = this.element?.querySelector(`#stock-list-${this.id}`);
     if (!listEl) return;
