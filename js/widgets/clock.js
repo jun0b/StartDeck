@@ -47,6 +47,7 @@ class ClockWidget extends WidgetBase {
 
   onDestroy() {
     if (this._timer) clearInterval(this._timer);
+    this._timer = null;
   }
 
   onVisibilityChange(isVisible) {

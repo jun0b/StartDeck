@@ -45,6 +45,10 @@ class WidgetBase {
   onDestroy() {}
   onVisibilityChange(isVisible) {}
 
+  onConfigChange() {
+    // 設定変更時のアクション（タイマー再起動など）
+  }
+
   getSettingsFields() { return []; }
 
   getContextMenuItems() {
@@ -535,6 +539,7 @@ const WidgetManager = {
         else widget.config[f.key] = input.value;
       }
       widget.save();
+      widget.onConfigChange?.();
       widget.updateBody();
       close();
       this._showToast('設定を保存しました', 'success');

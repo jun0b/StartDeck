@@ -26,6 +26,11 @@ class StockWidget extends WidgetBase {
 
   onDestroy() {
     if (this._timer) clearInterval(this._timer);
+    this._timer = null;
+  }
+
+  onConfigChange() {
+    this.onVisibilityChange(document.visibilityState === 'visible');
   }
 
   onVisibilityChange(isVisible) {

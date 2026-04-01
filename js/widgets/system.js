@@ -67,20 +67,17 @@ class SystemWidget extends WidgetBase {
   }
 
   onMount() {
-    this.onDestroy();
-    if (!chrome.system || !chrome.system.cpu || !chrome.system.memory) {
-      const errEl = this.element.querySelector('.system-error');
-      if (errEl) errEl.style.display = 'block';
-      return;
-    }
-
-    this._updateStats();
-    this._timer = setInterval(() => this._updateStats(), (this.config.refreshInterval || 2) * 1000);
+    this.onVisibilityChange(document.visibilityState === 'visible');
   }
 
   onDestroy() {
     if (this._timer) clearInterval(this._timer);
     this._timer = null;
+  }
+
+  onConfigChange() {
+    this.onVisibilityChange(false); // 旧タイマー破棄
+    this.onVisibilityChange(document.visibilityState === 'visible'); // 新設定で開始
   }
 
   onVisibilityChange(isVisible) {
