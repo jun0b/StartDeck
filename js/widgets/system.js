@@ -67,6 +67,7 @@ class SystemWidget extends WidgetBase {
   }
 
   onMount() {
+    this.onDestroy();
     this.onVisibilityChange(document.visibilityState === 'visible');
   }
 

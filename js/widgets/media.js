@@ -31,8 +31,8 @@ class MediaWidget extends WidgetBase {
   }
 
   onMount() {
-    // Service Workerの起動を待つため少し遅延してからポーリング開始
-    setTimeout(() => this._startPolling(), 500);
+    this.onDestroy();
+    this.onVisibilityChange(document.visibilityState === 'visible');
   }
 
   onDestroy() {

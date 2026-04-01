@@ -19,9 +19,8 @@ class StockWidget extends WidgetBase {
   }
 
   onMount() {
-    this._fetchStocks();
-    const interval = (this.config.refreshInterval || 60) * 1000;
-    this._timer = setInterval(() => this._fetchStocks(), interval);
+    this.onDestroy();
+    this.onVisibilityChange(document.visibilityState === 'visible');
   }
 
   onDestroy() {

@@ -41,6 +41,7 @@ class ClockWidget extends WidgetBase {
   }
 
   onMount() {
+    this.onDestroy();
     this._updateClock();
     this._timer = setInterval(() => this._updateClock(), 1000);
   }
