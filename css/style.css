@@ -1920,15 +1920,18 @@ input[type="file"]::file-selector-button:hover {
 /* ---------- Context Menu ---------- */
 .context-menu {
   position: fixed;
-  background: var(--bg-primary);
-  backdrop-filter: blur(20px);
-  border: 1px solid var(--border-color);
+  background: var(--glass-bg, rgba(30, 30, 35, 0.7)) !important;
+  backdrop-filter: blur(var(--glass-blur, 20px)) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur, 20px)) !important;
+  border: 1px solid var(--glass-border) !important;
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-lg);
   min-width: 180px;
   padding: 6px;
-  z-index: 500;
-  animation: fadeInScale 0.1s ease;
+  z-index: 1500; /* ウィジェットより前面に */
+  isolation: isolate;
+  transform: translate3d(0, 0, 0);
+  animation: fadeInScale 0.1s ease forwards;
   color: var(--text-primary);
 }
 
