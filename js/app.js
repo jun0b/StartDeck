@@ -120,17 +120,67 @@ const App = {
     const panel = document.getElementById('settings-panel');
     const closeBtn = document.getElementById('settings-close');
 
+    let bgTimerInterval;
+    const startBgTimer = () => {
+      stopBgTimer();
+      updateBgTimer();
+      bgTimerInterval = setInterval(updateBgTimer, 1000);
+    };
+    const stopBgTimer = () => {
+      if (bgTimerInterval) clearInterval(bgTimerInterval);
+      const timerEl = document.getElementById('bg-update-timer');
+      if (timerEl) timerEl.textContent = '';
+    };
+    const updateBgTimer = async () => {
+      const timerEl = document.getElementById('bg-update-timer');
+      if (!timerEl) return;
+      const type = bgTypeSelect?.value || 'auto';
+      if (type !== 'auto') {
+        timerEl.textContent = '';
+        return;
+      }
+      const cacheKey = `bg_cache_${type}`;
+      const cached = await Storage.get(cacheKey, null);
+      if (!cached || !cached.timestamp) {
+        timerEl.textContent = '(未取得)';
+        return;
+      }
+      const interval = parseInt(bgIntervalInput?.value || '60');
+      const nextUpdate = cached.timestamp + (interval * 60 * 1000);
+      const remaining = nextUpdate - Date.now();
+      if (remaining <= 0) {
+        timerEl.textContent = '(更新待ち)';
+      } else {
+        const hours = Math.floor(remaining / 3600000);
+        const mins = Math.floor((remaining % 3600000) / 60000);
+        const secs = Math.floor((remaining % 60000) / 1000);
+        
+        const hStr = String(hours).padStart(2, '0');
+        const mStr = String(mins).padStart(2, '0');
+        const sStr = String(secs).padStart(2, '0');
+        
+        timerEl.textContent = `(あと ${hStr}:${mStr}:${sStr})`;
+      }
+    };
+
     settingsBtn?.addEventListener('click', (e) => {
       e.stopPropagation();
-      panel?.classList.toggle('open');
+      const isOpen = panel?.classList.toggle('open');
+      if (isOpen) startBgTimer();
+      else stopBgTimer();
     });
-    closeBtn?.addEventListener('click', () => panel?.classList.remove('open'));
+
+    closeBtn?.addEventListener('click', () => {
+      panel?.classList.remove('open');
+      stopBgTimer();
+    });
 
     // パネル外クリックで閉じる
     document.addEventListener('click', (e) => {
       if (panel?.classList.contains('open')) {
         if (!panel.contains(e.target) && !settingsBtn.contains(e.target)) {
           panel.classList.remove('open');
+          stopBgTimer();
         }
       }
     });
@@ -224,8 +274,13 @@ const App = {
       if (type === 'custom' && url) {
         await WidgetManager.setBackground('custom', url);
       } else if (type === 'auto') {
-        // 設定変更時はキャッシュを削除せず、設定のみを更新する
-        // (WidgetManager._applyBackgroundが内部でキャッシュの有効期限を判断する)
+        // 設定変更時、既存の画像があればその取得時刻を「今」に書き換えてタイマーをリセットする
+        const cacheKey = `bg_cache_${type}`;
+        const cached = await Storage.get(cacheKey, null);
+        if (cached && cached.url) {
+          cached.timestamp = Date.now();
+          await Storage.set(cacheKey, cached);
+        }
         await WidgetManager.setBackground(type, '', '', interval);
       } else if (type === 'solid') {
         const color = bgColorInput?.value || '#111114';
@@ -243,6 +298,7 @@ const App = {
       bgTypeSelect.addEventListener('change', () => {
         updateBgUI(bgTypeSelect.value);
         applyBgNow();
+        if (panel?.classList.contains('open')) updateBgTimer();
       });
     }
 
@@ -258,6 +314,7 @@ const App = {
         if (isNaN(val) || val < 1) val = 1;
         bgIntervalInput.value = val;
         applyBgNow();
+        if (panel?.classList.contains('open')) updateBgTimer();
       });
     }
 
