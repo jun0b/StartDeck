@@ -9,6 +9,7 @@ const PreviewManager = {
   readerView: null,
   isReaderMode: false,
   currentUrl: '',
+  zoomLevel: 1.0,
 
   init() {
     this.overlay = document.getElementById('link-preview-overlay');
@@ -34,6 +35,11 @@ const PreviewManager = {
       }
     });
 
+    // ズーム操作
+    document.getElementById('preview-zoom-in')?.addEventListener('click', () => this.zoom(0.1));
+    document.getElementById('preview-zoom-out')?.addEventListener('click', () => this.zoom(-0.1));
+    document.getElementById('preview-zoom-text')?.addEventListener('click', () => this.resetZoom());
+
     // リーダーモード切り替え
     document.getElementById('preview-toggle-reader')?.addEventListener('click', () => this.toggleReader());
 
@@ -46,6 +52,37 @@ const PreviewManager = {
     });
   },
 
+  zoom(delta) {
+    this.zoomLevel = Math.min(2.0, Math.max(0.5, this.zoomLevel + delta));
+    this._applyZoom();
+  },
+
+  resetZoom() {
+    this.zoomLevel = 1.0;
+    this._applyZoom();
+  },
+
+  _applyZoom() {
+    const text = document.getElementById('preview-zoom-text');
+    if (text) text.textContent = `${Math.round(this.zoomLevel * 100)}%`;
+
+    if (this.frame) {
+      // transform: scale を使った疑似ズーム
+      // 拡大時はiframe自体を逆数倍に広げてからscaleで縮めることで解像度を維持する
+      const scale = this.zoomLevel;
+      const invScale = 100 / scale;
+      this.frame.style.width = `${invScale}%`;
+      this.frame.style.height = `${invScale}%`;
+      this.frame.style.transform = `scale(${scale})`;
+      this.frame.style.transformOrigin = 'top left';
+    }
+
+    if (this.readerView) {
+      // リーダーモードは標準のzoomプロパティが使いやすい
+      this.readerView.style.zoom = this.zoomLevel;
+    }
+  },
+
   /**
    * プレビューを開く
    * @param {string} url 
@@ -56,6 +93,7 @@ const PreviewManager = {
 
     this.currentUrl = url;
     this.isReaderMode = false;
+    this.resetZoom();
     this.readerView.classList.add('hidden');
     this.frame.classList.remove('hidden');
     document.getElementById('preview-toggle-reader').classList.remove('active');

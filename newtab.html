@@ -78,6 +78,15 @@
               <span class="preview-title" id="preview-url-text">Loading...</span>
             </div>
             <div class="preview-header__right">
+              <div class="preview-zoom-controls" style="display: flex; align-items: center; margin-right: 8px; gap: 2px;">
+                <button class="preview-header__btn" id="preview-zoom-out" title="縮小">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <span id="preview-zoom-text" style="font-size: 0.65rem; min-width: 32px; text-align: center; color: var(--text-secondary); cursor: pointer;" title="100%に戻す">100%</span>
+                <button class="preview-header__btn" id="preview-zoom-in" title="拡大">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+              </div>
               <button class="preview-header__btn" id="preview-toggle-reader" title="リーダーモード">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5z"/><path d="M8 7h8"/><path d="M8 11h8"/><path d="M8 15h5"/></svg>
               </button>
