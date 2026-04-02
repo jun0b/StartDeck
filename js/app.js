@@ -3,6 +3,7 @@
  */
 const App = {
   async init() {
+    if (typeof PreviewManager !== 'undefined') PreviewManager.init();
     await SearchManager.init();
     await WidgetManager.init();
     await WidgetManager._applyBackground();

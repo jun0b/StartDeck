@@ -10,7 +10,8 @@ class RSSWidget extends WidgetBase {
     ],
     activeTab: 0,
     perPage: 7,
-    showThumbnail: true
+    showThumbnail: true,
+    clickBehavior: 'newtab' // sametab, newtab, preview
   };
 
   constructor(id, config) {
@@ -231,6 +232,7 @@ class RSSWidget extends WidgetBase {
     }).join('') || '<div class="empty-state">記事がありません</div>';
 
     this._bindArticleHovers(listEl);
+    this._bindArticleClick(listEl);
 
     const pagEl = this.element?.querySelector(`#rss-pagination-${this.id}`);
     if (pagEl && totalPages > 1) {
@@ -252,6 +254,30 @@ class RSSWidget extends WidgetBase {
     } else if (pagEl) {
       pagEl.innerHTML = '';
     }
+  }
+
+  _bindArticleClick(listEl) {
+    const articles = listEl.querySelectorAll('.rss-article');
+    const behavior = this.config.clickBehavior || 'newtab';
+
+    articles.forEach(el => {
+      el.addEventListener('click', (e) => {
+        // デフォルトの遷移を制御
+        if (behavior === 'newtab') {
+          e.preventDefault();
+          window.open(el.href, '_blank', 'noopener,noreferrer');
+        } else if (behavior === 'preview') {
+          e.preventDefault();
+          if (typeof PreviewManager !== 'undefined') {
+            PreviewManager.open(el.href);
+          } else {
+            // PreviewManagerがない場合のフォールバックは新規タブ
+            window.open(el.href, '_blank', 'noopener,noreferrer');
+          }
+        }
+        // sametabの場合はそのまま遷移させる
+      });
+    });
   }
 
   _timeAgo(date) {
@@ -299,12 +325,24 @@ class RSSWidget extends WidgetBase {
       <div class="widget-popup__title">${this._escapeHtml(data.title)}</div>
       <div class="widget-popup__body">${this._escapeHtml(data.fullDesc || data.desc)}</div>
       <div class="widget-popup__footer">
+        <button class="btn btn--primary preview-btn" style="padding:4px 12px;font-size:0.75rem">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          プレビュー表示
+        </button>
         <a href="${this._escapeHtml(data.link)}" class="widget-popup__link" rel="noopener">
           元の記事を読む
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
         </a>
       </div>
     `;
+
+    // プレビューボタンのイベント
+    popup.querySelector('.preview-btn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof PreviewManager !== 'undefined') PreviewManager.open(data.link);
+        this._hidePopup();
+    });
 
     const rect = targetEl.getBoundingClientRect();
     const popupWidth = 380;
@@ -557,6 +595,16 @@ class RSSWidget extends WidgetBase {
     return [
       { key: 'perPage', label: '1ページあたりの記事数', type: 'number', min: 3, max: 20 },
       { key: 'showThumbnail', label: 'サムネイルを表示', type: 'checkbox' },
+      { 
+        key: 'clickBehavior', 
+        label: '記事クリック時の動作', 
+        type: 'select',
+        options: [
+          { value: 'sametab', label: 'このタブで開く' },
+          { value: 'newtab', label: '新規タブで開く' },
+          { value: 'preview', label: 'プレビューウィンドウで開く' }
+        ]
+      }
     ];
   }
 }

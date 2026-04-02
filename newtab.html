@@ -68,6 +68,40 @@
         <div class="idle-clock" id="idle-clock">00:00</div>
         <div class="idle-date" id="idle-date"></div>
       </div>
+
+      <!-- Link Preview Modal -->
+      <div class="preview-overlay" id="link-preview-overlay">
+        <div class="preview-window">
+          <div class="preview-header">
+            <div class="preview-header__left">
+              <img id="preview-favicon" src="" alt="" style="width:16px;height:16px;margin-right:8px;display:none">
+              <span class="preview-title" id="preview-url-text">Loading...</span>
+            </div>
+            <div class="preview-header__right">
+              <button class="preview-header__btn" id="preview-toggle-reader" title="リーダーモード">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5z"/><path d="M8 7h8"/><path d="M8 11h8"/><path d="M8 15h5"/></svg>
+              </button>
+              <button class="preview-header__btn" id="preview-open-external" title="新しいタブで開く">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              </button>
+              <button class="preview-header__btn" id="preview-close-btn" title="閉じる">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+          </div>
+          <div class="preview-body">
+            <div class="preview-loading"></div>
+            <iframe id="preview-frame" src="about:blank"></iframe>
+            <div id="preview-reader-view" class="preview-reader-view hidden">
+              <div class="reader-container">
+                <h1 id="reader-title"></h1>
+                <div id="reader-meta"></div>
+                <div id="reader-body"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Settings Panel -->
@@ -252,6 +286,7 @@
 
     <!-- Scripts (順序重要) -->
     <script src="js/storage.js"></script>
+    <script src="js/preview-manager.js"></script>
     <script src="js/widget-manager.js"></script>
     <script src="js/widgets/search.js"></script>
     <script src="js/widgets/clock.js"></script>

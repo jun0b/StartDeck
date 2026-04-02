@@ -274,6 +274,42 @@ function seekMediaPage(time) {
   }
 }
 
+// === プレビュー用ヘッダー制御 (Manifest V3 declarativeNetRequest) ===
+async function setupPreviewRules() {
+  const ruleId = 1001;
+  try {
+    const rules = [{
+      id: ruleId,
+      priority: 1,
+      action: {
+        type: "modifyHeaders",
+        responseHeaders: [
+          { header: "x-frame-options", operation: "remove" },
+          { header: "content-security-policy", operation: "remove" },
+          { header: "frame-options", operation: "remove" }
+        ]
+      },
+      condition: {
+        resourceTypes: ["sub_frame"]
+      }
+    }];
+
+    await chrome.declarativeNetRequest.updateDynamicRules({
+      removeRuleIds: [ruleId],
+      addRules: rules
+    });
+    console.log('Preview rules updated successfully');
+  } catch (err) {
+    console.error('Failed to update preview rules:', err);
+  }
+}
+
+// 起動・インストール時に実行
+chrome.runtime.onInstalled.addListener(() => {
+  setupPreviewRules();
+});
+setupPreviewRules();
+
 // === メッセージリスナー ===
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   // 汎用fetchプロキシ（CORSバイパス）
