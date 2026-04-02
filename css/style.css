@@ -1002,8 +1002,9 @@ input[type="file"]::file-selector-button:hover {
 /* ---------- Generic Widget Popup ---------- */
 .widget-popup {
   position: absolute;
-  z-index: 1000;
+  z-index: 2000;
   width: 380px;
+  box-sizing: border-box;
   max-height: 400px;
   background: var(--bg-widget);
   backdrop-filter: blur(24px);
@@ -1023,6 +1024,11 @@ input[type="file"]::file-selector-button:hover {
   transform: translate3d(0, 10px, 0);
 }
 
+.widget-popup--rss {
+  width: 380px;
+  min-width: 380px;
+}
+
 .widget-popup.visible {
   opacity: 1;
   visibility: visible;
@@ -1040,6 +1046,7 @@ input[type="file"]::file-selector-button:hover {
   font-size: 0.82rem;
   color: var(--text-secondary);
   line-height: 1.6;
+  flex: 1;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-right: 4px;

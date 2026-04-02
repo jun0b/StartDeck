@@ -317,8 +317,10 @@ class RSSWidget extends WidgetBase {
     let popup = document.querySelector('.widget-popup');
     if (!popup) {
       popup = document.createElement('div');
-      popup.className = 'widget-popup';
+      popup.className = 'widget-popup widget-popup--rss';
       document.body.appendChild(popup);
+    } else {
+      popup.className = 'widget-popup widget-popup--rss';
     }
 
     popup.innerHTML = `
@@ -345,7 +347,14 @@ class RSSWidget extends WidgetBase {
     });
 
     const rect = targetEl.getBoundingClientRect();
-    const popupWidth = 380;
+    
+    // 一旦不可視の状態で配置して実際のサイズを測る
+    popup.style.display = 'flex';
+    popup.style.visibility = 'hidden';
+    popup.style.left = '-9999px';
+    
+    const popupWidth = popup.offsetWidth || 380;
+    const popupHeight = popup.offsetHeight || 300;
 
     // 表示位置の計算
     let left = rect.right + 10;
@@ -357,10 +366,12 @@ class RSSWidget extends WidgetBase {
     }
 
     // 上下の調整
-    if (top + 300 > window.innerHeight) {
-      top = window.innerHeight - 320;
+    if (top + popupHeight > window.innerHeight) {
+      top = window.innerHeight - popupHeight - 20;
     }
 
+    // 位置を設定してから可視化
+    popup.style.visibility = 'visible';
     popup.style.left = `${left + window.scrollX}px`;
     popup.style.top = `${top + window.scrollY}px`;
     popup.classList.add('visible');

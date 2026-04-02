@@ -143,6 +143,8 @@ class WeatherWidget extends WidgetBase {
       popup = document.createElement('div');
       popup.className = 'widget-popup';
       document.body.appendChild(popup);
+    } else {
+      popup.className = 'widget-popup';
     }
 
     const hourly = data.hourly;
@@ -178,14 +180,31 @@ class WeatherWidget extends WidgetBase {
     `;
 
     const rect = targetEl.getBoundingClientRect();
+    
+    // 計測のために配置
+    popup.style.display = 'flex';
+    popup.style.visibility = 'hidden';
+    popup.style.left = '-9999px';
+    popup.style.width = '250px';
+
+    const pWidth = 250;
+    const pHeight = popup.offsetHeight || 300;
+
     let left = rect.right + 10;
     let top = rect.top;
-    if (left + 250 > window.innerWidth) left = rect.left - 260;
-    if (top + 350 > window.innerHeight) top = window.innerHeight - 360;
 
+    if (left + pWidth > window.innerWidth) {
+      left = rect.left - pWidth - 10;
+    }
+
+    // 下にはみ出る場合の調整
+    if (top + pHeight > window.innerHeight) {
+      top = window.innerHeight - pHeight - 20;
+    }
+
+    popup.style.visibility = 'visible';
     popup.style.left = `${left + window.scrollX}px`;
     popup.style.top = `${top + window.scrollY}px`;
-    popup.style.width = '250px';
     popup.classList.add('visible');
 
     popup.onmouseenter = () => clearTimeout(this._hideTimer);

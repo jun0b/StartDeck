@@ -172,6 +172,8 @@ class StockWidget extends WidgetBase {
       popup = document.createElement('div');
       popup.className = 'widget-popup';
       document.body.appendChild(popup);
+    } else {
+      popup.className = 'widget-popup';
     }
 
     const formatVol = (v) => {
