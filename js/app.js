@@ -416,7 +416,7 @@ const App = {
       if (document.body.classList.contains('is-idle')) {
         document.body.classList.remove('is-idle');
         if (clockInterval) {
-          clearInterval(clockInterval);
+          clearTimeout(clockInterval);
           clockInterval = null;
         }
       }
@@ -432,11 +432,17 @@ const App = {
       document.querySelector('.settings-panel')?.classList.remove('open');
       document.body.classList.add('is-idle');
       updateIdleClock();
-      clockInterval = setInterval(updateIdleClock, 1000); // 秒表示のため1秒おきに更新
     };
 
     const updateIdleClock = () => {
+      // 次の秒の「0ミリ秒」の瞬間に更新を予約する同期ロジック
       const now = new Date();
+      
+      // 前のタイマーがあれば破棄（二重起動防止）
+      if (clockInterval) {
+        clearTimeout(clockInterval);
+        clockInterval = null;
+      }
       const clockEl = document.getElementById('idle-clock');
       const dateEl = document.getElementById('idle-date');
       if (clockEl) {
@@ -451,6 +457,12 @@ const App = {
         const d = now.getDate();
         const day = days[now.getDay()];
         dateEl.textContent = `${m}/${d} ${day}`;
+      }
+
+      // 次の秒までのミリ秒を計算して再帰的にセット
+      if (document.body.classList.contains('is-idle')) {
+        const nextTick = 1000 - now.getMilliseconds();
+        clockInterval = setTimeout(updateIdleClock, nextTick);
       }
     };
 

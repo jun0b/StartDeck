@@ -43,25 +43,18 @@ class ClockWidget extends WidgetBase {
   onMount() {
     this.onDestroy();
     this._updateClock();
-    this._timer = setInterval(() => this._updateClock(), 1000);
   }
 
   onDestroy() {
-    if (this._timer) clearInterval(this._timer);
+    if (this._timer) clearTimeout(this._timer);
     this._timer = null;
   }
 
   onVisibilityChange(isVisible) {
     if (isVisible) {
       this._updateClock();
-      if (!this._timer) {
-        this._timer = setInterval(() => this._updateClock(), 1000);
-      }
     } else {
-      if (this._timer) {
-        clearInterval(this._timer);
-        this._timer = null;
-      }
+      this.onDestroy();
     }
   }
 
@@ -105,6 +98,11 @@ class ClockWidget extends WidgetBase {
         dateEl.textContent = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日(${days[now.getDay()]})`;
       }
     }
+
+    // 次の秒の0ミリ秒に予約（同期ロジック）
+    const nextTick = 1000 - now.getMilliseconds();
+    if (this._timer) clearTimeout(this._timer);
+    this._timer = setTimeout(() => this._updateClock(), nextTick);
   }
 
   getContextMenuItems() {
