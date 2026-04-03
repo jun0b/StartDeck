@@ -117,7 +117,8 @@ class RSSWidget extends WidgetBase {
 
     if (cached && cached.articles && (now - cached.timestamp < 600000)) {
       cached.articles.forEach(a => {
-        if (!a.feedName) a.feedName = feed.name;
+        // キャッシュされていても最新の表示用名称を常に反映させる
+        a.feedName = feed.name;
       });
       return cached.articles;
     }
@@ -193,9 +194,11 @@ class RSSWidget extends WidgetBase {
           allArticles.push(...res.value);
         }
       });
-      // 日付の降順でソート
+      // 日付の降順でソート（無効な日付も考慮）
       allArticles.sort((a, b) => {
-        return new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime();
+        const dateA = a.pubDate ? new Date(a.pubDate).getTime() : 0;
+        const dateB = b.pubDate ? new Date(b.pubDate).getTime() : 0;
+        return (isNaN(dateB) ? 0 : dateB) - (isNaN(dateA) ? 0 : dateA);
       });
       
       this._articles['-1'] = allArticles;
@@ -429,7 +432,11 @@ class RSSWidget extends WidgetBase {
       </div>
     `;
 
-    const close = () => { overlay.remove(); this.updateBody(); };
+    const close = () => { 
+      this._articles = {}; // キャッシュをクリアして再取得を強制
+      overlay.remove(); 
+      this.updateBody(); 
+    };
     overlay.querySelector('.modal__close').addEventListener('click', close);
     overlay.querySelector('.modal-close-btn').addEventListener('click', close);
 
@@ -442,6 +449,7 @@ class RSSWidget extends WidgetBase {
             this.config.activeTab = Math.max(0, this.config.feeds.length - 1);
           }
           this.save();
+          this._articles = {}; // キャッシュをクリア
           overlay.remove();
           this._showManageDialog();
         }
@@ -506,6 +514,7 @@ class RSSWidget extends WidgetBase {
         arr.splice(insertIdx, 0, movedItem);
 
         this.save();
+        this._articles = {}; // キャッシュをクリア
         overlay.remove();
         this._showManageDialog();
       });
@@ -566,6 +575,7 @@ class RSSWidget extends WidgetBase {
       }
       
       this.save();
+      this._articles = {}; // メモリキャッシュをクリア
       close();
       if (parentModal) {
         parentModal.remove();
@@ -592,10 +602,23 @@ class RSSWidget extends WidgetBase {
       this._showManageDialog();
       return true;
     } else if (action === 'refresh') {
-      const activeIdx = this.config.activeTab || 0;
-      const feed = (this.config.feeds || [])[activeIdx];
-      if (feed) {
-        Storage.set(`rss_cache_${feed.url}`, null).then(() => this._loadFeed(feed, activeIdx));
+      const activeIdx = this.config.activeTab !== undefined ? this.config.activeTab : ((this.config.feeds || []).length > 1 ? -1 : 0);
+      if (activeIdx === -1) {
+        // すべてのフィードのキャッシュをクリアして再取得
+        const feeds = this.config.feeds || [];
+        const promises = feeds.map(f => Storage.set(`rss_cache_${f.url}`, null));
+        Promise.all(promises).then(() => {
+          this._articles = {};
+          this._loadAllFeeds();
+        });
+      } else {
+        const feed = (this.config.feeds || [])[activeIdx];
+        if (feed) {
+          Storage.set(`rss_cache_${feed.url}`, null).then(() => {
+            if (this._articles) delete this._articles[activeIdx];
+            this._loadFeed(feed, activeIdx);
+          });
+        }
       }
       return true;
     }
