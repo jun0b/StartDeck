@@ -141,10 +141,10 @@ class WeatherWidget extends WidgetBase {
     let popup = document.querySelector('.widget-popup');
     if (!popup) {
       popup = document.createElement('div');
-      popup.className = 'widget-popup';
+      popup.className = 'widget-popup widget-popup--weather';
       document.body.appendChild(popup);
     } else {
-      popup.className = 'widget-popup';
+      popup.className = 'widget-popup widget-popup--weather';
     }
 
     const hourly = data.hourly;
@@ -190,11 +190,11 @@ class WeatherWidget extends WidgetBase {
     const pWidth = 250;
     const pHeight = popup.offsetHeight || 300;
 
-    let left = rect.right + 10;
+    let left = rect.right + 20;
     let top = rect.top;
 
     if (left + pWidth > window.innerWidth) {
-      left = rect.left - pWidth - 10;
+      left = rect.left - pWidth - 20;
     }
 
     // 下にはみ出る場合の調整
@@ -215,7 +215,10 @@ class WeatherWidget extends WidgetBase {
 
   _hidePopup() {
     const popup = document.querySelector('.widget-popup');
-    if (popup) popup.classList.remove('visible');
+    if (popup) {
+      popup.classList.remove('visible');
+      popup.classList.remove('widget-popup--weather');
+    }
   }
 
   _weatherCodeToDesc(code) {

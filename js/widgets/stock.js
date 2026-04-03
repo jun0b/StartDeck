@@ -214,9 +214,9 @@ class StockWidget extends WidgetBase {
     `;
 
     const rect = targetEl.getBoundingClientRect();
-    let left = rect.right + 10;
+    let left = rect.right + 20;
     let top = rect.top;
-    if (left + 300 > window.innerWidth) left = rect.left - 310;
+    if (left + 300 > window.innerWidth) left = rect.left - 320;
 
     popup.style.left = `${left + window.scrollX}px`;
     popup.style.top = `${top + window.scrollY}px`;

@@ -360,12 +360,12 @@ class RSSWidget extends WidgetBase {
     const popupHeight = popup.offsetHeight || 300;
 
     // 表示位置の計算
-    let left = rect.right + 10;
+    let left = rect.right + 20;
     let top = rect.top;
 
     // 右側にスペースがない場合は左側に表示
     if (left + popupWidth > window.innerWidth) {
-      left = rect.left - popupWidth - 10;
+      left = rect.left - popupWidth - 20;
     }
 
     // 上下の調整
@@ -390,6 +390,7 @@ class RSSWidget extends WidgetBase {
     const popup = document.querySelector('.widget-popup');
     if (popup) {
       popup.classList.remove('visible');
+      popup.classList.remove('widget-popup--rss'); // クラスも確実に除去
     }
   }
 

@@ -79,9 +79,13 @@ const SearchManager = {
       this._showDropdown();
     });
 
-    document.addEventListener('click', () => {
-      dropdown?.classList.remove('show');
-    });
+    if (!this._hasClickOutsideListener) {
+      document.addEventListener('click', () => {
+        const dropdown = document.getElementById('search-dropdown');
+        dropdown?.classList.remove('show');
+      });
+      this._hasClickOutsideListener = true;
+    }
   },
 
   _showDropdown() {

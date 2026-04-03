@@ -47,6 +47,14 @@ const App = {
         document.getElementById('search-input')?.focus();
       }
       if (e.key === 'Escape') {
+        if (document.body.classList.contains('is-idle')) {
+          this._wakeUp();
+          return;
+        }
+        if (typeof PreviewManager !== 'undefined' && PreviewManager.overlay?.classList.contains('active')) {
+          PreviewManager.close();
+          return;
+        }
         document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
         document.querySelectorAll('.context-menu').forEach(m => m.remove());
         document.querySelector('.settings-panel')?.classList.remove('open');
@@ -381,16 +389,16 @@ const App = {
     let lastTestStartTime = 0; // テスト開始時のタイムスタンプを保持
 
     const resetTimer = (e) => {
-      // テストボタンをクリックした直後（1秒間）の操作は無視する
-      if (Date.now() - lastTestStartTime < 1000) return;
-
-      // テストボタン自体の操作も常に無視する
-      if (e && e.target && e.target.closest && e.target.closest('#setting-idle-test')) return;
-
-      if (document.body.classList.contains('is-idle')) {
-        document.body.classList.remove('is-idle');
-        clearInterval(clockInterval);
+      // テストボタンをクリックした直後（800ms以内）は操作を無視する
+      if (this._lastTestStartTime && Date.now() - this._lastTestStartTime < 800) {
+        return;
       }
+
+      // 常に現在のIdle状態を確認して起きる
+      if (document.body.classList.contains('is-idle')) {
+        this._wakeUp();
+      }
+      
       clearTimeout(idleTimeout);
       
       const enabled = WidgetManager.layout.idleEnabled || false;
@@ -398,6 +406,19 @@ const App = {
       
       if (enabled && mins > 0) {
         idleTimeout = setTimeout(goIdle, mins * 60 * 1000);
+      }
+    };
+
+    /**
+     * 離席状態からの復帰（共有化）
+     */
+    this._wakeUp = () => {
+      if (document.body.classList.contains('is-idle')) {
+        document.body.classList.remove('is-idle');
+        if (clockInterval) {
+          clearInterval(clockInterval);
+          clockInterval = null;
+        }
       }
     };
 
@@ -463,7 +484,7 @@ const App = {
     // テストボタン
     idleTestBtn?.addEventListener('click', (e) => {
       e.stopPropagation();
-      lastTestStartTime = Date.now();
+      this._lastTestStartTime = Date.now();
       goIdle();
     });
 
@@ -484,6 +505,11 @@ const App = {
     ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'].forEach(evt => {
       document.addEventListener(evt, resetTimer, { capture: true, passive: true });
     });
+
+    // iframe領域での操作検知対応 (mouseenter)
+    document.addEventListener('mouseenter', (e) => {
+      if (e.target.tagName === 'IFRAME') resetTimer(e);
+    }, { capture: true, passive: true });
 
     resetTimer();
   }

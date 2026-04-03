@@ -1015,8 +1015,8 @@ input[type="file"]::file-selector-button:hover {
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  pointer-events: auto;
+  z-index: 2000;
+  pointer-events: none; /* デフォルトでは背後の要素をクリック可能にする */
   opacity: 0;
   visibility: hidden;
   will-change: transform, opacity;
@@ -1032,7 +1032,14 @@ input[type="file"]::file-selector-button:hover {
 .widget-popup.visible {
   opacity: 1;
   visibility: visible;
-  transform: translate3d(0, 0, 0);
+  /* アクティブ化時に特定のポップアップのみ操作を可能にする場合は個別に指定 */
+}
+
+/* 操作が必要なポップアップのみ、かつ「表示中」のみポインターイベントを有効にする */
+.widget-popup.visible.widget-popup--rss,
+.widget-popup.visible.widget-popup--weather,
+.widget-popup.visible.widget-popup--ip {
+  pointer-events: auto;
 }
 
 .widget-popup__title {
@@ -1927,7 +1934,7 @@ input[type="file"]::file-selector-button:hover {
 /* ---------- Context Menu ---------- */
 .context-menu {
   position: fixed;
-  background: var(--glass-bg, rgba(30, 30, 35, 0.7)) !important;
+  background: var(--glass-bg, rgba(30, 30, 35, 0.96)) !important;
   backdrop-filter: blur(var(--glass-blur, 20px)) !important;
   -webkit-backdrop-filter: blur(var(--glass-blur, 20px)) !important;
   border: 1px solid var(--glass-border) !important;
@@ -1935,10 +1942,10 @@ input[type="file"]::file-selector-button:hover {
   box-shadow: var(--shadow-lg);
   min-width: 180px;
   padding: 6px;
-  z-index: 1500; /* ウィジェットより前面に */
+  z-index: 2500; /* 最前面付近に */
   isolation: isolate;
   transform: translate3d(0, 0, 0);
-  animation: fadeInScale 0.1s ease forwards;
+  animation: fadeInScale 0.12s ease forwards;
   color: var(--text-primary);
 }
 
@@ -2115,9 +2122,8 @@ input[type="file"]::file-selector-button:hover {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  /* 中央を明るく、周辺をわずかに暗くするビネット効果 */
-  background: radial-gradient(circle, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.4) 100%);
+  z-index: 3000; /* スクリーンセーバーは常に最前面 */
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.8) 100%);
   pointer-events: none;
   opacity: 0;
   transition: opacity 1.5s ease;
@@ -2184,7 +2190,7 @@ input[type="file"]::file-selector-button:hover {
   bottom: 0;
   left: 0;
   pointer-events: none;
-  z-index: 2100;
+  z-index: 2800; /* プレビューも高めに */
   display: flex;
   justify-content: flex-end; /* 右側から出す */
   padding: 20px;
@@ -2498,19 +2504,7 @@ input[type="file"]::file-selector-button:hover {
   border-left: 3px solid var(--accent-info);
 }
 
-/* ---------- Context Menu ---------- */
-.context-menu {
-  position: fixed;
-  min-width: 180px;
-  background: rgba(36, 36, 42, 0.96);
-  backdrop-filter: blur(20px);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow-lg);
-  padding: 6px;
-  z-index: 1000;
-  animation: fadeInScale 0.12s ease;
-}
+/* Context menu item definition handled above */
 
 .context-menu__item {
   display: flex;

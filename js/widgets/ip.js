@@ -132,8 +132,10 @@ class IpWidget extends WidgetBase {
     let popup = document.querySelector('.widget-popup');
     if (!popup) {
       popup = document.createElement('div');
-      popup.className = 'widget-popup';
+      popup.className = 'widget-popup widget-popup--ip';
       document.body.appendChild(popup);
+    } else {
+      popup.className = 'widget-popup widget-popup--ip';
     }
 
     const { ip, hostname, org, city, region, country, loc } = data;
@@ -216,6 +218,7 @@ class IpWidget extends WidgetBase {
     const popup = document.querySelector('.widget-popup');
     if (popup) {
       popup.classList.remove('visible');
+      popup.classList.remove('widget-popup--ip');
     }
   }
 
