@@ -11,6 +11,11 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
+// 拡張機能アイコンクリック時の挙動
+chrome.action.onClicked.addListener(() => {
+  chrome.tabs.create({ url: "newtab.html" });
+});
+
 // コンテキストメニューのクリックハンドラ
 chrome.contextMenus.onClicked.addListener((info) => {
   if (info.menuItemId === "open-options") {

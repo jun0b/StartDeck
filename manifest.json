@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "StartDeck",
   "version": "1.0.0",
-  "description": "カスタマイズ可能なホームダッシュボード - start.me風ウィジェットベースの新しいタブページ",
+  "description": "カスタマイズ可能なホームダッシュボード - ウィジェットベースの新しいタブページ",
   "chrome_url_overrides": {
     "newtab": "newtab.html"
   },
@@ -18,5 +18,8 @@
   },
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'; connect-src * data: blob:; img-src * data:; frame-src *;"
+  },
+  "action": {
+    "default_title": "StartDeckを開く"
   }
 }
