@@ -431,6 +431,15 @@ const App = {
       // テスト時、設定パネルなどは閉じる
       document.querySelector('.settings-panel')?.classList.remove('open');
       document.body.classList.add('is-idle');
+      
+      // ダイアログ（モーダル）やメニューをすべて閉じる
+      try {
+        document.querySelectorAll('.modal-overlay, .context-menu').forEach(el => el.remove());
+        document.querySelectorAll('.widget-popup.visible').forEach(popup => popup.classList.remove('visible'));
+      } catch (e) {
+        console.error('Failed to cleanup overlays on idle:', e);
+      }
+
       updateIdleClock();
     };
 
