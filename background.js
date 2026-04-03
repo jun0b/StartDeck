@@ -12,8 +12,29 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 // 拡張機能アイコンクリック時の挙動
-chrome.action.onClicked.addListener(() => {
-  chrome.tabs.create({ url: "newtab.html" });
+chrome.action.onClicked.addListener(async () => {
+  const extensionUrl = chrome.runtime.getURL("newtab.html");
+  const extensionId = chrome.runtime.id;
+  
+  // すべてのタブから StartDeck のページを探す
+  const allTabs = await chrome.tabs.query({});
+  const dashboardTab = allTabs.find(tab => 
+    tab.url && (
+      tab.url === extensionUrl ||
+      tab.url.startsWith(`chrome-extension://${extensionId}/`) ||
+      tab.url === "chrome://newtab/" ||
+      tab.url === "edge://newtab/"
+    )
+  );
+  
+  if (dashboardTab) {
+    // 既存のタブがあればフォーカス
+    chrome.tabs.update(dashboardTab.id, { active: true });
+    chrome.windows.update(dashboardTab.windowId, { focused: true });
+  } else {
+    // なければ新規作成
+    chrome.tabs.create({ url: "newtab.html" });
+  }
 });
 
 // コンテキストメニューのクリックハンドラ
