@@ -15,6 +15,9 @@ class IpWidget extends WidgetBase {
     this._v6Data = null;
     this._isOnline = navigator.onLine;
     this._isLoading = false;
+    this._latency = null;
+    this._latencyLastUpdate = null;
+    this._isLatencyLoading = false;
     this._hoverTimer = null;
     this._hideTimer = null;
 
@@ -62,6 +65,14 @@ class IpWidget extends WidgetBase {
               ${statusIcon}
             </div>
             <span style="font-weight: 700; font-size: 0.8rem; color: ${this._isOnline ? 'var(--text-primary)' : statusColor}; font-family: var(--font-sans, system-ui);">${statusText}</span>
+            ${this._isOnline ? `
+              <div class="latency-container" style="margin-left: auto; display: flex; align-items: center; gap: 6px; cursor: help; padding: 2px 4px; border-radius: 4px; transition: background 0.2s;">
+                <span id="latency-val-${this.id}" style="font-size: 0.7rem; color: var(--text-tertiary); font-family: var(--font-mono, monospace);">${this._latency ? `${this._latency}ms` : (this._isLatencyLoading ? '...' : '--')}</span>
+                <button class="latency-refresh-btn" id="latency-refresh-${this.id}" title="レイテンシを再計測" style="border: none; background: none; padding: 2px; cursor: pointer; color: var(--text-tertiary); display: flex; align-items: center; justify-content: center; opacity: 0.6; transition: all 0.2s; border-radius: 4px;">
+                  <svg class="${this._isLatencyLoading ? 'spinning' : ''}" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="${this._isLatencyLoading ? 'animation: spin 1s linear infinite;' : ''}"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                </button>
+              </div>
+            ` : ''}
           </div>
           ${this._isOnline ? `
             <div style="display: flex; flex-direction: column; gap: 2px;">
@@ -108,6 +119,20 @@ class IpWidget extends WidgetBase {
     if (testBtn) {
       testBtn.onclick = () => this._showSpeedTestModal();
     }
+
+    const latencyBtn = this.element.querySelector(`#latency-refresh-${this.id}`);
+    if (latencyBtn) {
+      latencyBtn.onclick = (e) => {
+        e.stopPropagation();
+        this._fetchLatency();
+      };
+      latencyBtn.onmouseenter = () => { latencyBtn.style.opacity = '1'; latencyBtn.style.background = 'var(--bg-secondary)'; };
+      latencyBtn.onmouseleave = () => { if (!this._isLatencyLoading) { latencyBtn.style.opacity = '0.6'; latencyBtn.style.background = 'none'; } };
+    }
+
+    if (this._isOnline && this._latency === null && !this._isLatencyLoading) {
+      this._fetchLatency();
+    }
   }
 
   onDestroy() {
@@ -137,6 +162,81 @@ class IpWidget extends WidgetBase {
         this._hideTimer = setTimeout(() => this._hidePopup(), 300);
       };
     });
+
+    const latencyContainer = this.element.querySelector(".latency-container");
+    if (latencyContainer) {
+      latencyContainer.onmouseenter = () => {
+        latencyContainer.style.background = "var(--bg-secondary)";
+        clearTimeout(this._hideTimer);
+        this._hoverTimer = setTimeout(() => {
+          if (this._latency) this._showLatencyPopup(latencyContainer);
+        }, 300);
+      };
+      latencyContainer.onmouseleave = () => {
+        latencyContainer.style.background = "";
+        clearTimeout(this._hoverTimer);
+        this._hideTimer = setTimeout(() => this._hidePopup(), 300);
+      };
+    }
+  }
+
+  _showLatencyPopup(targetEl) {
+    let popup = document.querySelector('.widget-popup');
+    if (!popup) {
+      popup = document.createElement('div');
+      popup.className = 'widget-popup widget-popup--ip';
+      document.body.appendChild(popup);
+    } else {
+      popup.className = 'widget-popup widget-popup--ip';
+    }
+
+    const lastUpdateStr = this._latencyLastUpdate ? this._latencyLastUpdate.toLocaleTimeString() : 'N/A';
+    
+    let quality = '普通';
+    let qualityColor = 'var(--text-secondary)';
+    if (this._latency < 30) { quality = '極めて良好'; qualityColor = 'var(--accent-success)'; }
+    else if (this._latency < 60) { quality = '良好'; qualityColor = 'var(--accent-primary)'; }
+    else if (this._latency > 150) { quality = '遅延あり'; qualityColor = 'var(--accent-danger)'; }
+
+    popup.innerHTML = `
+      <div class="widget-popup__title" style="display: flex; align-items: center; gap: 10px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span style="font-weight: 700; font-size: 0.9rem;">ネットワーク遅延 (Ping)</span>
+      </div>
+      <div class="widget-popup__body">
+        <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 12px; padding: 4px 0;">
+          <span style="font-size: 2rem; font-weight: 800; font-family: var(--font-mono, monospace); line-height: 1;">${this._latency}</span>
+          <span style="color: var(--text-tertiary); font-size: 0.8rem;">ms</span>
+          <span style="margin-left: auto; font-size: 0.75rem; font-weight: 700; color: ${qualityColor}">${quality}</span>
+        </div>
+        
+        <div class="stock-popup-grid">
+          <div class="stock-popup-item" style="grid-column: span 2;">
+            <div class="stock-popup-label">宛先サーバー / サービス</div>
+            <div class="stock-popup-value" style="font-size: 0.8rem;">Cloudflare Edge (1.1.1.1)</div>
+          </div>
+          <div class="stock-popup-item">
+            <div class="stock-popup-label">計測方法</div>
+            <div class="stock-popup-value">HTTPS HEAD</div>
+          </div>
+          <div class="stock-popup-item">
+            <div class="stock-popup-label">最終更新</div>
+            <div class="stock-popup-value">${lastUpdateStr}</div>
+          </div>
+        </div>
+        <div style="margin-top: 12px; font-size: 0.7rem; color: var(--text-tertiary); line-height: 1.4; padding-top: 8px; border-top: 1px solid var(--border-color);">
+          この値は、あなたのデバイスから各サービスへの応答速度を示します。数値が小さいほど、ウェブサイトの読み込みやオンライン通話が快適になります。
+        </div>
+      </div>
+    `;
+
+    this._positionPopup(targetEl, popup, 320);
+    popup.classList.add('visible');
+
+    popup.onmouseenter = () => clearTimeout(this._hideTimer);
+    popup.onmouseleave = () => {
+      this._hideTimer = setTimeout(() => this._hidePopup(), 300);
+    };
   }
 
   _showPopup(targetEl, data, label) {
@@ -183,23 +283,7 @@ class IpWidget extends WidgetBase {
       </div>
     `;
 
-    const rect = targetEl.getBoundingClientRect();
-    const popupWidth = 380;
-    
-    let left = rect.right + 10;
-    let top = rect.top;
-
-    if (left + popupWidth > window.innerWidth) {
-      left = rect.left - popupWidth - 10;
-    }
-    if (top + 300 > window.innerHeight) {
-      top = Math.max(10, window.innerHeight - 320);
-    }
-    if (top < 10) top = 10;
-
-    popup.style.left = `${left + window.scrollX}px`;
-    popup.style.top = `${top + window.scrollY}px`;
-    popup.style.width = '380px';
+    this._positionPopup(targetEl, popup, 380);
     popup.classList.add('visible');
 
     const copyBtn = popup.querySelector('.ip-popup-copy');
@@ -225,6 +309,24 @@ class IpWidget extends WidgetBase {
     };
   }
 
+  _positionPopup(targetEl, popup, popupWidth) {
+    const rect = targetEl.getBoundingClientRect();
+    let left = rect.right + 10;
+    let top = rect.top;
+
+    if (left + popupWidth > window.innerWidth) {
+      left = rect.left - popupWidth - 10;
+    }
+    if (top + 300 > window.innerHeight) {
+      top = Math.max(10, window.innerHeight - 320);
+    }
+    if (top < 10) top = 10;
+
+    popup.style.left = `${left + window.scrollX}px`;
+    popup.style.top = `${top + window.scrollY}px`;
+    popup.style.width = popupWidth + 'px';
+  }
+
   _hidePopup() {
     const popup = document.querySelector('.widget-popup');
     if (popup) {
@@ -237,13 +339,39 @@ class IpWidget extends WidgetBase {
     this._isOnline = true;
     this.updateBody();
     this._fetchIp();
+    this._fetchLatency();
   }
 
   _handleOffline() {
     this._isOnline = false;
     this._v4Data = null;
     this._v6Data = null;
+    this._latency = null;
     this.updateBody();
+  }
+
+  async _fetchLatency() {
+    if (!this._isOnline || this._isLatencyLoading) return;
+    
+    this._isLatencyLoading = true;
+    const latencyVal = this.element.querySelector(`#latency-val-${this.id}`);
+    const latencyIcon = this.element.querySelector(`#latency-refresh-${this.id} svg`);
+    if (latencyVal) latencyVal.textContent = '...';
+    if (latencyIcon) latencyIcon.style.animation = 'spin 1s linear infinite';
+
+    try {
+      // 複数の大手CDNへのHEADリクエストで平均的なレイテンシを計測（キャッシュ回避）
+      const start = performance.now();
+      await fetch("https://1.1.1.1/cdn-cgi/trace", { mode: 'no-cors', cache: 'no-store' });
+      this._latency = Math.round(performance.now() - start);
+      this._latencyLastUpdate = new Date();
+    } catch (error) {
+      console.error("Latency Fetch Error:", error);
+      this._latency = null;
+    } finally {
+      this._isLatencyLoading = false;
+      this.updateBody();
+    }
   }
 
   async _fetchIp(force = false) {
