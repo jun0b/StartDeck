@@ -69,6 +69,12 @@ class IpWidget extends WidgetBase {
               ${showV6 ? renderIpRow(this._v6Data, 'IPv6') : ''}
               ${((showV4 && !this._v4Data) || (showV6 && !this._v6Data)) && (this._v4Data || this._v6Data) ? '' : ( (!this._v4Data && !this._v6Data && (showV4 || showV6)) ? '<div style="font-size: 0.75rem; color: var(--text-tertiary); padding: 10px 14px;">IP情報を取得できませんでした。</div>' : '' )}
             </div>
+            <div style="padding: 6px 14px 4px;">
+              <button class="btn btn--ghost btn--sm speed-test-btn" id="speed-test-${this.id}" style="width: 100%; font-size: 0.72rem; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                スピードテストを実行
+              </button>
+            </div>
           ` : '<div style="font-size: 0.75rem; color: var(--text-tertiary); padding: 10px 14px;">オフラインのため情報を表示できません。</div>'}
         </div>
       `;
@@ -78,7 +84,7 @@ class IpWidget extends WidgetBase {
       <div style="padding: 0;">
         ${content}
       </div>
-      <div style="text-align: right; padding: 2px 14px 4px; font-size: 0.55rem; color: var(--text-tertiary); opacity: 0.5;">Powered by ipinfo.io</div>
+      <div style="text-align: right; padding: 2px 14px 4px; font-size: 0.55rem; color: var(--text-tertiary); opacity: 0.5;">Powered by ipinfo.io & M-Lab</div>
     `;
   }
 
@@ -96,6 +102,11 @@ class IpWidget extends WidgetBase {
 
     if (this._isOnline && !this._v4Data && !this._v6Data && !this._isLoading && (showV4 || showV6)) {
       this._fetchIp();
+    }
+
+    const testBtn = this.element.querySelector(`#speed-test-${this.id}`);
+    if (testBtn) {
+      testBtn.onclick = () => this._showSpeedTestModal();
     }
   }
 
@@ -321,6 +332,260 @@ class IpWidget extends WidgetBase {
       return true;
     }
     return super.handleContextMenuAction(action);
+  }
+
+  /* --- Speed Test logic --- */
+
+  _showSpeedTestModal() {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    
+    overlay.innerHTML = `
+      <div class="modal" style="width: 480px; max-width: 95%; overflow: hidden; display: flex; flex-direction: column;">
+        <div class="modal__header">
+          <span class="modal__title">スピードテスト (M-Lab)</span>
+          <button class="modal__close">&times;</button>
+        </div>
+        <div class="modal__body" style="padding: 24px; min-height: 280px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+          <div id="st-status-${this.id}" style="font-size: 0.9rem; color: var(--text-tertiary); margin-bottom: 20px;">サーバーを探索中...</div>
+          
+          <div class="speed-meter-container" style="position: relative; width: 140px; height: 140px; margin-bottom: 20px;">
+            <svg viewBox="0 0 100 100" style="transform: rotate(-90deg); width: 100%; height: 100%;">
+              <circle cx="50" cy="50" r="45" fill="none" stroke="var(--bg-secondary)" stroke-width="8"></circle>
+              <circle id="st-progress-bar-${this.id}" cx="50" cy="50" r="45" fill="none" stroke="var(--accent-primary)" stroke-width="8" stroke-dasharray="283" stroke-dashoffset="283" style="transition: stroke-dashoffset 0.1s linear;"></circle>
+            </svg>
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+              <div id="st-current-val-${this.id}" style="font-size: 1.8rem; font-weight: 800; font-family: var(--font-mono, monospace); line-height: 1;">0</div>
+              <div id="st-current-unit-${this.id}" style="font-size: 0.75rem; color: var(--text-tertiary);">Mbps</div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; width: 100%; margin-top: 10px;">
+            <div style="text-align: center;">
+              <div style="font-size: 0.65rem; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 4px;">Latency</div>
+              <div id="st-ping-${this.id}" style="font-size: 1.1rem; font-weight: 600; font-family: var(--font-mono, monospace);">-</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 0.65rem; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 4px;">Download</div>
+              <div id="st-down-${this.id}" style="font-size: 1.1rem; font-weight: 600; font-family: var(--font-mono, monospace); color: var(--accent-primary);">-</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 0.65rem; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 4px;">Upload</div>
+              <div id="st-up-${this.id}" style="font-size: 1.1rem; font-weight: 600; font-family: var(--font-mono, monospace); color: var(--accent-success);">-</div>
+            </div>
+          </div>
+
+          <div id="st-server-${this.id}" style="font-size: 0.65rem; color: var(--text-tertiary); margin-top: 30px; text-align: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></div>
+        </div>
+        <div class="modal__footer">
+          <button class="btn btn--ghost modal-close-btn" style="min-width: 100px;">キャンセル</button>
+          <button id="st-retry-btn-${this.id}" class="btn btn--primary" style="display: none; min-width: 100px;">再試行</button>
+        </div>
+      </div>
+    `;
+
+    const close = () => {
+      this._abortTest();
+      overlay.remove();
+    };
+    overlay.querySelector('.modal__close').onclick = close;
+    overlay.querySelector('.modal-close-btn').onclick = close;
+    
+    document.body.appendChild(overlay);
+
+    this._startTest(overlay);
+  }
+
+  _abortTest() {
+    if (this._speedTestWS) {
+      this._speedTestWS.onmessage = null;
+      this._speedTestWS.onerror = null;
+      this._speedTestWS.onclose = null;
+      this._speedTestWS.close();
+      this._speedTestWS = null;
+    }
+  }
+
+  async _startTest(modal) {
+    const status = modal.querySelector(`#st-status-${this.id}`);
+    const pingEl = modal.querySelector(`#st-ping-${this.id}`);
+    const downEl = modal.querySelector(`#st-down-${this.id}`);
+    const upEl = modal.querySelector(`#st-up-${this.id}`);
+    const serverEl = modal.querySelector(`#st-server-${this.id}`);
+    const curVal = modal.querySelector(`#st-current-val-${this.id}`);
+    const curUnit = modal.querySelector(`#st-current-unit-${this.id}`);
+    const progressBar = modal.querySelector(`#st-progress-bar-${this.id}`);
+    const retryBtn = modal.querySelector(`#st-retry-btn-${this.id}`);
+    const closeBtn = modal.querySelector('.modal-close-btn');
+
+    const updateProgress = (val, max = 100) => {
+      const percent = Math.min(100, (val / max) * 100);
+      const offset = 283 - (283 * percent) / 100;
+      progressBar.style.strokeDashoffset = offset;
+    };
+
+    const setVal = (v) => { curVal.textContent = v > 100 ? Math.round(v) : v.toFixed(1); };
+
+    try {
+      status.textContent = '最適なサーバーを選択中...';
+      const locateRes = await fetch('https://locate.measurementlab.net/v2/nearest/ndt/ndt7');
+      if (!locateRes.ok) throw new Error('サーバーの取得に失敗しました');
+      const locateData = await locateRes.json();
+      const server = locateData.results[0];
+      const wsUrl = server.urls['wss:///ndt/v7/download'];
+      
+      serverEl.textContent = `Server: ${server.location.city}, ${server.location.country} (${server.machine})`;
+
+      // --- Ping (Simple fetch) ---
+      status.textContent = 'レイテンシを計測中...';
+      const startPing = performance.now();
+      await fetch(`https://${server.machine}/ndt/v7/download?bytes=0`, { mode: 'no-cors' });
+      const ping = Math.round(performance.now() - startPing);
+      pingEl.textContent = `${ping}ms`;
+
+      // --- Download (ndt7 WebSocket) ---
+      status.textContent = 'ダウンロード計測中...';
+      curUnit.textContent = 'Mbps';
+      
+      const downloadResult = await new Promise((resolve, reject) => {
+        let startTime = null;
+        let totalBytes = 0;
+        let lastReportTime = 0;
+
+        const ws = new WebSocket(wsUrl, 'net.measurementlab.ndt.v7');
+        ws.binaryType = 'arraybuffer';
+        this._speedTestWS = ws;
+        
+        ws.onopen = () => { startTime = performance.now(); };
+        ws.onmessage = (e) => {
+          if (typeof e.data === 'string') return; // Ignore JSON reports
+          if (!startTime) startTime = performance.now();
+          
+          totalBytes += e.data.byteLength;
+          const now = performance.now();
+          const duration = (now - startTime) / 1000;
+          
+          if (duration > 0 && now - lastReportTime > 100) {
+            const mbps = (totalBytes * 8) / (duration * 1000000);
+            if (!isNaN(mbps)) {
+              setVal(mbps);
+              updateProgress(duration, 10);
+              lastReportTime = now;
+            }
+          }
+        };
+        ws.onclose = () => {
+          if (!startTime) { resolve(0); return; }
+          const duration = (performance.now() - startTime) / 1000;
+          const finalMbps = duration > 0 ? (totalBytes * 8) / (duration * 1000000) : 0;
+          resolve(finalMbps || 0);
+        };
+        ws.onerror = reject;
+      });
+
+      downEl.textContent = `${downloadResult.toFixed(1)} Mbps`;
+      this._speedTestWS = null;
+
+      // --- Upload (ndt7 WebSocket) ---
+      status.textContent = 'アップロード計測中...';
+      updateProgress(0);
+      curVal.textContent = '0';
+      const upUrl = server.urls['wss:///ndt/v7/upload'];
+
+      const uploadResult = await new Promise((resolve, reject) => {
+        const ws = new WebSocket(upUrl, 'net.measurementlab.ndt.v7');
+        ws.binaryType = 'arraybuffer';
+        this._speedTestWS = ws;
+        
+        let startTime = null;
+        let totalBytesSent = 0;
+        let lastReportTime = 0;
+        const testDuration = 10000; // 10 seconds
+
+        ws.onopen = () => {
+          startTime = performance.now();
+          lastReportTime = startTime;
+          
+          const sendData = () => {
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+            
+            const now = performance.now();
+            const duration = now - startTime;
+            
+            if (duration >= testDuration) {
+              ws.close();
+              return;
+            }
+
+            // バッファが空いたら追加で送信（1回64KB）
+            // バッファに溜まりすぎないように制限
+            while (ws.bufferedAmount < 512 * 1024) {
+              const data = new Uint8Array(64 * 1024);
+              ws.send(data);
+              totalBytesSent += data.byteLength;
+            }
+
+            if (now - lastReportTime > 150) {
+              // 送信済みデータからバッファ分を引いて、実送信量を推定
+              const actualSent = totalBytesSent - ws.bufferedAmount;
+              const mbps = (actualSent * 8) / (duration / 1000 * 1000000);
+              if (mbps > 0) {
+                setVal(mbps);
+                updateProgress(duration, testDuration);
+              }
+              lastReportTime = now;
+            }
+            
+            setTimeout(sendData, 10);
+          };
+          
+          sendData();
+        };
+
+        ws.onmessage = (e) => {
+          // サーバーからのレポート（JSON）を無視しても良いが、
+          // 終了時にサーバー側の統計を使うとより正確
+          if (typeof e.data === 'string') {
+            try {
+              const report = JSON.parse(e.data);
+              // 必要があればサーバー側の数値を採用
+            } catch(ex) {}
+          }
+        };
+
+        ws.onclose = () => {
+          const duration = (performance.now() - startTime) / 1000;
+          const actualSent = totalBytesSent - ws.bufferedAmount;
+          const finalMbps = duration > 0 ? (actualSent * 8) / (duration * 1000000) : 0;
+          resolve(finalMbps);
+        };
+        ws.onerror = reject;
+      });
+
+      upEl.textContent = `${uploadResult.toFixed(1)} Mbps`;
+      setVal(uploadResult);
+      updateProgress(100);
+
+      status.textContent = '計測完了';
+      closeBtn.textContent = '閉じる';
+      retryBtn.style.display = 'block';
+      retryBtn.onclick = () => {
+        retryBtn.style.display = 'none';
+        closeBtn.textContent = 'キャンセル';
+        this._startTest(modal);
+      };
+
+    } catch (err) {
+      console.error(err);
+      status.textContent = 'エラーが発生しました';
+      status.style.color = 'var(--accent-danger)';
+      retryBtn.style.display = 'block';
+      retryBtn.onclick = () => {
+        status.style.color = '';
+        retryBtn.style.display = 'none';
+        this._startTest(modal);
+      };
+    }
   }
 }
 
