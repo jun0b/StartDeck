@@ -95,7 +95,7 @@ class IpWidget extends WidgetBase {
       <div style="padding: 0;">
         ${content}
       </div>
-      <div style="text-align: right; padding: 2px 14px 4px; font-size: 0.55rem; color: var(--text-tertiary); opacity: 0.5;">Powered by ipinfo.io & M-Lab</div>
+      </div>
     `;
   }
 
@@ -280,6 +280,7 @@ class IpWidget extends WidgetBase {
             <div class="stock-popup-value">${this._escapeHtml(country || '')} ${loc ? `<span style="font-size: 0.65rem; color: var(--text-tertiary); margin-left: 4px;">(${loc})</span>` : ''}</div>
           </div>
         </div>
+        <div style="margin-top: 12px; font-size: 0.55rem; color: var(--text-tertiary); opacity: 0.5; text-align: right; padding-top: 4px; border-top: 1px solid var(--border-color);">Powered by ipinfo.io</div>
       </div>
     `;
 
@@ -505,9 +506,12 @@ class IpWidget extends WidgetBase {
 
           <div id="st-server-${this.id}" style="font-size: 0.65rem; color: var(--text-tertiary); margin-top: 30px; text-align: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></div>
         </div>
-        <div class="modal__footer">
-          <button class="btn btn--ghost modal-close-btn" style="min-width: 100px;">キャンセル</button>
-          <button id="st-retry-btn-${this.id}" class="btn btn--primary" style="display: none; min-width: 100px;">再試行</button>
+        <div class="modal__footer" style="display: flex; align-items: center; justify-content: space-between;">
+          <div style="font-size: 0.6rem; color: var(--text-tertiary); opacity: 0.7;">Powered by M-Lab NDT7 API</div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn--ghost modal-close-btn" style="min-width: 80px;">キャンセル</button>
+            <button id="st-retry-btn-${this.id}" class="btn btn--primary" style="display: none; min-width: 80px;">再試行</button>
+          </div>
         </div>
       </div>
     `;
