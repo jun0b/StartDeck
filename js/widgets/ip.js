@@ -504,7 +504,8 @@ class IpWidget extends WidgetBase {
             </div>
           </div>
 
-          <div id="st-server-${this.id}" style="font-size: 0.65rem; color: var(--text-tertiary); margin-top: 30px; text-align: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></div>
+          <div id="st-server-${this.id}" style="font-size: 0.65rem; color: var(--text-tertiary); margin-top: 24px; text-align: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></div>
+          <div style="font-size: 0.6rem; color: var(--text-tertiary); margin-top: 8px; text-align: center; opacity: 0.7;">※計測中にタブを切り替えると、正常に測定できない場合があります。</div>
         </div>
         <div class="modal__footer" style="display: flex; align-items: center; justify-content: space-between;">
           <div style="font-size: 0.6rem; color: var(--text-tertiary); opacity: 0.7;">Powered by M-Lab NDT7 API</div>
