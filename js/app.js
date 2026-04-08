@@ -532,6 +532,12 @@ const App = {
       if (e.target.tagName === 'IFRAME') resetTimer(e);
     }, { capture: true, passive: true });
 
+    // 外部から明示的にIdle状態に移行するためのメソッドを公開
+    this.enterIdleMode = () => {
+      this._lastTestStartTime = Date.now();
+      goIdle();
+    };
+
     resetTimer();
   }
 };

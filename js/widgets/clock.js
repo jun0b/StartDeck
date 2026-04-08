@@ -108,6 +108,7 @@ class ClockWidget extends WidgetBase {
   getContextMenuItems() {
     return [
       { action: 'toggle24h', label: this.config.use24h ? '12時間表示にする' : '24時間表示にする', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' },
+      { action: 'startIdle', label: 'スクリーンセーバーを起動', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="10"/></svg>' },
       { divider: true },
       ...super.getContextMenuItems()
     ];
@@ -118,6 +119,12 @@ class ClockWidget extends WidgetBase {
       this.config.use24h = !this.config.use24h;
       this.save();
       this._updateClock();
+      return true;
+    }
+    if (action === 'startIdle') {
+      if (typeof App !== 'undefined' && App.enterIdleMode) {
+        App.enterIdleMode();
+      }
       return true;
     }
     return super.handleContextMenuAction(action);
