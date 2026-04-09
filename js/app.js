@@ -428,6 +428,11 @@ const App = {
         resetTimer();
         return;
       }
+      // プレビューウィンドウが表示されている間はアイドル移行をキャンセルして再送
+      if (typeof PreviewManager !== 'undefined' && PreviewManager.overlay?.classList.contains('active')) {
+        resetTimer();
+        return;
+      }
       // テスト時、設定パネルなどは閉じる
       document.querySelector('.settings-panel')?.classList.remove('open');
       document.body.classList.add('is-idle');
