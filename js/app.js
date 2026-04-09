@@ -386,7 +386,10 @@ const App = {
     const idleTestBtn = document.getElementById('setting-idle-test');
     let idleTimeout;
     let clockInterval;
-    let lastTestStartTime = 0; // テスト開始時のタイムスタンプを保持
+    let longPressTimer;
+    let longPressStart;
+    let cursorHideTimer;
+    this._isManualIdle = false;
 
     const resetTimer = (e) => {
       // テストボタンをクリックした直後（800ms以内）は操作を無視する
@@ -394,19 +397,115 @@ const App = {
         return;
       }
 
-      // 常に現在のIdle状態を確認して起きる
+      // スクリーンセーバー表示中の場合
       if (document.body.classList.contains('is-idle')) {
-        this._wakeUp();
+        // カーソル表示管理
+        if (e.type === 'mousemove' || e.type === 'mousedown' || e.type === 'touchstart') {
+          document.body.classList.remove('hide-cursor');
+          clearTimeout(cursorHideTimer);
+          cursorHideTimer = setTimeout(() => {
+            if (document.body.classList.contains('is-idle')) {
+              document.body.classList.add('hide-cursor');
+            }
+          }, 2000); // 2秒動かなければ隠す
+        }
+
+        // 手動起動（ロックモード）の場合
+        if (this._isManualIdle) {
+          // キー入力があったらヒントを表示
+          if (e.type === 'keydown') {
+            showUnlockHint();
+            return;
+          }
+          // mousedown/touchstart の場合は長押しロジックに任せるが、通常の wakeUp は防ぐ
+          if (e.type !== 'mousedown' && e.type !== 'touchstart') return;
+        } else {
+          // 自動起動なら通常通り解除
+          this._wakeUp();
+        }
       }
       
+      // 操作があったらタイマーをリセット（自動移行用）
       clearTimeout(idleTimeout);
       
       const enabled = WidgetManager.layout.idleEnabled || false;
       const mins = parseInt(WidgetManager.layout.idleTime || 5);
       
       if (enabled && mins > 0) {
-        idleTimeout = setTimeout(goIdle, mins * 60 * 1000);
+        idleTimeout = setTimeout(() => goIdle(false), mins * 60 * 1000);
       }
+    };
+
+    /**
+     * 解除ヒントを表示
+     */
+    let hintTimeout;
+    const showUnlockHint = () => {
+      let hintEl = document.getElementById('idle-unlock-hint');
+      if (!hintEl) {
+        hintEl = document.createElement('div');
+        hintEl.id = 'idle-unlock-hint';
+        hintEl.className = 'idle-unlock-hint';
+        hintEl.textContent = '長押しして解除';
+        document.body.appendChild(hintEl);
+      }
+      
+      hintEl.classList.add('visible');
+      clearTimeout(hintTimeout);
+      hintTimeout = setTimeout(() => {
+        hintEl.classList.remove('visible');
+      }, 2500);
+    };
+
+    /**
+     * 長押し開始
+     */
+    const startLongPress = (e) => {
+      if (!document.body.classList.contains('is-idle') || !this._isManualIdle) return;
+      
+      // コンテキストメニュー（右クリック）や中クリックは無視
+      if (e.type === 'mousedown' && e.button !== 0) return;
+
+      longPressStart = Date.now();
+      document.body.classList.add('is-unlocking');
+      
+      // インジケーターの作成/取得
+      let progressEl = document.getElementById('idle-unlock-progress');
+      if (!progressEl) {
+        progressEl = document.createElement('div');
+        progressEl.id = 'idle-unlock-progress';
+        progressEl.className = 'idle-unlock-progress';
+        progressEl.innerHTML = '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" class="bg"/><circle cx="50" cy="50" r="45" fill="none" class="fg"/></svg>';
+        document.body.appendChild(progressEl);
+      }
+
+      // 座標のセット（マウス位置に表示）
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      progressEl.style.left = `${clientX}px`;
+      progressEl.style.top = `${clientY}px`;
+      progressEl.classList.add('active');
+
+      clearTimeout(longPressTimer);
+      longPressTimer = setTimeout(() => {
+        cancelLongPress();
+        this._wakeUp();
+      }, 1500); // 1.5秒
+    };
+
+    /**
+     * 長押し中断
+     */
+    const cancelLongPress = () => {
+      // 短いクリックだった場合はヒントを表示
+      if (longPressStart && Date.now() - longPressStart < 500) {
+        showUnlockHint();
+      }
+      longPressStart = 0;
+      clearTimeout(longPressTimer);
+      document.body.classList.remove('is-unlocking');
+      const progressEl = document.getElementById('idle-unlock-progress');
+      if (progressEl) progressEl.classList.remove('active');
     };
 
     /**
@@ -415,6 +514,13 @@ const App = {
     this._wakeUp = () => {
       if (document.body.classList.contains('is-idle')) {
         document.body.classList.remove('is-idle');
+        document.body.classList.remove('hide-cursor');
+        clearTimeout(cursorHideTimer);
+        this._isManualIdle = false;
+        cancelLongPress();
+        const hintEl = document.getElementById('idle-unlock-hint');
+        if (hintEl) hintEl.classList.remove('visible');
+
         if (clockInterval) {
           clearTimeout(clockInterval);
           clockInterval = null;
@@ -422,7 +528,8 @@ const App = {
       }
     };
 
-    const goIdle = () => {
+    const goIdle = (isManual = false) => {
+      this._isManualIdle = isManual;
       const active = document.activeElement;
       if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) {
         resetTimer();
@@ -435,7 +542,16 @@ const App = {
       }
       // テスト時、設定パネルなどは閉じる
       document.querySelector('.settings-panel')?.classList.remove('open');
+      document.body.classList.toggle('is-idle-manual', isManual);
       document.body.classList.add('is-idle');
+      
+      // カーソル自動非表示タイマー開始
+      clearTimeout(cursorHideTimer);
+      cursorHideTimer = setTimeout(() => {
+        if (document.body.classList.contains('is-idle')) {
+          document.body.classList.add('hide-cursor');
+        }
+      }, 2000);
       
       // ダイアログ（モーダル）やメニューをすべて閉じる
       try {
@@ -511,7 +627,7 @@ const App = {
     idleTestBtn?.addEventListener('click', (e) => {
       e.stopPropagation();
       this._lastTestStartTime = Date.now();
-      goIdle();
+      goIdle(true); // テストも長押しモードで確認できるようにする
     });
 
     const handleVisibilityChange = () => {
@@ -528,9 +644,16 @@ const App = {
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'].forEach(evt => {
+    ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'wheel'].forEach(evt => {
       document.addEventListener(evt, resetTimer, { capture: true, passive: true });
     });
+
+    // 長押しイベントの監視
+    document.addEventListener('mousedown', startLongPress, { capture: true });
+    document.addEventListener('touchstart', startLongPress, { capture: true, passive: true });
+    document.addEventListener('mouseup', cancelLongPress, { capture: true });
+    document.addEventListener('touchend', cancelLongPress, { capture: true });
+    document.addEventListener('mouseleave', cancelLongPress, { capture: true });
 
     // iframe領域での操作検知対応 (mouseenter)
     document.addEventListener('mouseenter', (e) => {
@@ -538,9 +661,9 @@ const App = {
     }, { capture: true, passive: true });
 
     // 外部から明示的にIdle状態に移行するためのメソッドを公開
-    this.enterIdleMode = () => {
+    this.enterIdleMode = (isManual = false) => {
       this._lastTestStartTime = Date.now();
-      goIdle();
+      goIdle(isManual);
     };
 
     resetTimer();

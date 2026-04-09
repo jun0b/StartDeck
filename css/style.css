@@ -3462,3 +3462,87 @@ input[type="file"]::file-selector-button:hover {
 }
 .tab-badge--active { background: var(--accent-light); color: #fff; }
 .tab-badge--discarded { background: var(--bg-input); color: var(--text-tertiary); border: 1px solid var(--border-color); }
+
+/* ---------- Idle Screen Unlock (Manual Mode) ---------- */
+.idle-unlock-hint {
+  position: fixed;
+  bottom: 12%;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  opacity: 0;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  pointer-events: none;
+  z-index: 10001;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.idle-unlock-hint.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.idle-unlock-progress {
+  position: fixed;
+  width: 64px;
+  height: 64px;
+  margin-left: -32px;
+  margin-top: -32px;
+  pointer-events: none;
+  z-index: 10002;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.idle-unlock-progress.active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.idle-unlock-progress svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.idle-unlock-progress circle {
+  fill: none;
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.idle-unlock-progress .bg {
+  stroke: rgba(255, 255, 255, 0.2);
+}
+
+.idle-unlock-progress .fg {
+  stroke: #fff;
+  stroke-dasharray: 283; /* 2 * PI * 45 = 282.7 */
+  stroke-dashoffset: 283;
+}
+
+.idle-unlock-progress.active .fg {
+  transition: stroke-dashoffset 1.5s linear;
+  stroke-dashoffset: 0;
+}
+
+/* ロック中の演出 */
+.is-idle-manual.hide-cursor {
+  cursor: none;
+}
+
+.is-unlocking .idle-clock,
+.is-unlocking .idle-date {
+  filter: blur(2px);
+  transition: filter 0.5s ease;
+}

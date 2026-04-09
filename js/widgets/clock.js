@@ -123,7 +123,7 @@ class ClockWidget extends WidgetBase {
     }
     if (action === 'startIdle') {
       if (typeof App !== 'undefined' && App.enterIdleMode) {
-        App.enterIdleMode();
+      App.enterIdleMode(true);
       }
       return true;
     }
