@@ -315,24 +315,6 @@ class IpWidget extends WidgetBase {
     };
   }
 
-  _positionPopup(targetEl, popup, popupWidth) {
-    const rect = targetEl.getBoundingClientRect();
-    let left = rect.right + 10;
-    let top = rect.top;
-
-    if (left + popupWidth > window.innerWidth) {
-      left = rect.left - popupWidth - 10;
-    }
-    if (top + 300 > window.innerHeight) {
-      top = Math.max(10, window.innerHeight - 320);
-    }
-    if (top < 10) top = 10;
-
-    popup.style.left = `${left + window.scrollX}px`;
-    popup.style.top = `${top + window.scrollY}px`;
-    popup.style.width = popupWidth + 'px';
-  }
-
   _hidePopup() {
     const popup = document.querySelector('.widget-popup');
     if (popup) {

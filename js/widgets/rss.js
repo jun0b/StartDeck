@@ -349,34 +349,8 @@ class RSSWidget extends WidgetBase {
         this._hidePopup();
     });
 
-    const rect = targetEl.getBoundingClientRect();
-    
-    // 一旦不可視の状態で配置して実際のサイズを測る
-    popup.style.display = 'flex';
-    popup.style.visibility = 'hidden';
-    popup.style.left = '-9999px';
-    
-    const popupWidth = popup.offsetWidth || 380;
-    const popupHeight = popup.offsetHeight || 300;
-
-    // 表示位置の計算
-    let left = rect.right + 20;
-    let top = rect.top;
-
-    // 右側にスペースがない場合は左側に表示
-    if (left + popupWidth > window.innerWidth) {
-      left = rect.left - popupWidth - 20;
-    }
-
-    // 上下の調整
-    if (top + popupHeight > window.innerHeight) {
-      top = window.innerHeight - popupHeight - 20;
-    }
-
-    // 位置を設定してから可視化
-    popup.style.visibility = 'visible';
-    popup.style.left = `${left + window.scrollX}px`;
-    popup.style.top = `${top + window.scrollY}px`;
+    const popupWidth = 380;
+    this._positionPopup(targetEl, popup, popupWidth);
     popup.classList.add('visible');
 
     // ポップアップ自体にマウスが乗っている間は消さない

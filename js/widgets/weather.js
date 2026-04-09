@@ -179,32 +179,8 @@ class WeatherWidget extends WidgetBase {
       </div>
     `;
 
-    const rect = targetEl.getBoundingClientRect();
-    
-    // 計測のために配置
-    popup.style.display = 'flex';
-    popup.style.visibility = 'hidden';
-    popup.style.left = '-9999px';
-    popup.style.width = '250px';
-
     const pWidth = 250;
-    const pHeight = popup.offsetHeight || 300;
-
-    let left = rect.right + 20;
-    let top = rect.top;
-
-    if (left + pWidth > window.innerWidth) {
-      left = rect.left - pWidth - 20;
-    }
-
-    // 下にはみ出る場合の調整
-    if (top + pHeight > window.innerHeight) {
-      top = window.innerHeight - pHeight - 20;
-    }
-
-    popup.style.visibility = 'visible';
-    popup.style.left = `${left + window.scrollX}px`;
-    popup.style.top = `${top + window.scrollY}px`;
+    this._positionPopup(targetEl, popup, pWidth);
     popup.classList.add('visible');
 
     popup.onmouseenter = () => clearTimeout(this._hideTimer);

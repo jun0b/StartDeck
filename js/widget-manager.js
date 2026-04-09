@@ -132,7 +132,48 @@ class WidgetBase {
     this.save();
   }
 
+  /**
+   * ポップアップ表示位置の計算（UIスケーリング対応）
+   */
+  _positionPopup(targetEl, popup, popupWidth) {
+    const scale = (WidgetManager.layout.uiScale || 100) / 100;
+    
+    // 一旦不可視の状態で配置して実際のサイズを測る
+    popup.style.display = 'flex';
+    popup.style.visibility = 'hidden';
+    popup.style.left = '-9999px';
+    popup.style.width = popupWidth + 'px';
+    
+    const pHeight = popup.offsetHeight || 300;
+    const rect = targetEl.getBoundingClientRect();
+    
+    // 論理座標に変換
+    const target = {
+      left: rect.left / scale,
+      right: rect.right / scale,
+      top: rect.top / scale
+    };
+
+    let left = target.right + 20;
+    let top = target.top;
+
+    // 右端の見切れ防止
+    if (left + popupWidth > window.innerWidth) {
+      left = target.left - popupWidth - 20;
+    }
+    
+    // 下端の見切れ防止
+    if (top + pHeight > window.innerHeight) {
+      top = Math.max(10, window.innerHeight - pHeight - 20);
+    }
+
+    popup.style.left = `${left + window.scrollX}px`;
+    popup.style.top = `${top + window.scrollY}px`;
+    popup.style.visibility = 'visible';
+  }
+
   _escapeHtml(str) {
+    if (!str) return '';
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
@@ -195,9 +236,9 @@ const WidgetManager = {
   },
 
   _applyUIScale() {
-    const scale = (this.layout.uiScale ?? 100) / 100;
+    this.uiScale = (this.layout.uiScale ?? 100) / 100;
     // htmlタグ（root）に zoom を適用するのが、固定要素（fixed）を含めた全体のスケーリングとして最も安定する
-    document.documentElement.style.zoom = scale;
+    document.documentElement.style.zoom = this.uiScale;
   },
 
   _applyWidgetStyles() {
@@ -447,15 +488,14 @@ const WidgetManager = {
     if (e) {
       menu.style.top = e.clientY + 'px';
 
-      // Prevent running out of right edge
-      if (e.clientX + 200 > window.innerWidth) { // Approx menu width
+      if (e.clientX + 200 > window.innerWidth) {
         menu.style.right = (window.innerWidth - e.clientX) + 'px';
         menu.style.left = 'auto';
       } else {
         menu.style.left = e.clientX + 'px';
         menu.style.right = 'auto';
       }
-    } else {
+    } else if (widget) {
       const rect = widget.element.querySelector('.widget-settings-btn').getBoundingClientRect();
       menu.style.top = rect.bottom + 4 + 'px';
       menu.style.right = (window.innerWidth - rect.right) + 'px';
