@@ -131,7 +131,12 @@ class IpWidget extends WidgetBase {
     }
 
     if (this._isOnline && this._latency === null && !this._isLatencyLoading) {
-      this._fetchLatency();
+      // 起動直後のCPU負荷による誤差を防ぐため、少し待ってから計測を開始する
+      setTimeout(() => {
+        if (this.element && this._latency === null && !this._isLatencyLoading) {
+          this._fetchLatency();
+        }
+      }, 2500);
     }
   }
 
