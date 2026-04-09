@@ -153,6 +153,7 @@ const WidgetManager = {
     this._bindBackgroundEvents();
     this._bindVisibilityEvents();
     this._applyWidgetStyles();
+    this._applyUIScale();
   },
 
   _bindVisibilityEvents() {
@@ -188,8 +189,15 @@ const WidgetManager = {
       opacity: 0.72,
       blur: 20,
       idleEnabled: false,
-      idleTime: 5
+      idleTime: 5,
+      uiScale: 100
     };
+  },
+
+  _applyUIScale() {
+    const scale = (this.layout.uiScale ?? 100) / 100;
+    // htmlタグ（root）に zoom を適用するのが、固定要素（fixed）を含めた全体のスケーリングとして最も安定する
+    document.documentElement.style.zoom = scale;
   },
 
   _applyWidgetStyles() {

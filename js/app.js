@@ -220,6 +220,23 @@ const App = {
       });
     }
 
+    // --- UIスケール ---
+    const uiScaleSlider = document.getElementById('setting-ui-scale');
+    const uiScaleVal = document.getElementById('val-ui-scale');
+    if (uiScaleSlider && uiScaleVal) {
+      const currentScale = WidgetManager.layout.uiScale ?? 100;
+      uiScaleSlider.value = currentScale;
+      uiScaleVal.textContent = currentScale + '%';
+
+      uiScaleSlider.addEventListener('input', () => {
+        const val = parseInt(uiScaleSlider.value);
+        uiScaleVal.textContent = val + '%';
+        WidgetManager.layout.uiScale = val;
+        WidgetManager._applyUIScale();
+        WidgetManager.saveLayout();
+      });
+    }
+
     // --- 透明度とブラー ---
     const opacitySlider = document.getElementById('setting-widget-opacity');
     const opacityVal = document.getElementById('val-widget-opacity');

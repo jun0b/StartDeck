@@ -1990,9 +1990,9 @@ input[type="file"]::file-selector-button:hover {
 .settings-panel {
   position: fixed;
   top: 0;
+  bottom: 0;
   right: -400px;
   width: 380px;
-  height: 100vh;
   background: var(--bg-primary);
   backdrop-filter: blur(20px);
   border-left: 1px solid var(--border-color);
