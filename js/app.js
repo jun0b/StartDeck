@@ -443,13 +443,16 @@ const App = {
       }
       
       // 操作があったらタイマーをリセット（自動移行用）
-      clearTimeout(idleTimeout);
-      
-      const enabled = WidgetManager.layout.idleEnabled || false;
-      const mins = parseInt(WidgetManager.layout.idleTime || 5);
-      
-      if (enabled && mins > 0) {
-        idleTimeout = setTimeout(() => goIdle(false), mins * 60 * 1000);
+      // ただし、すでにスクリーンセーバーがアクティブな場合は、ウェイクアップ時を除きタイマーを操作しない
+      if (!document.body.classList.contains('is-idle')) {
+        clearTimeout(idleTimeout);
+        
+        const enabled = WidgetManager.layout.idleEnabled || false;
+        const mins = parseInt(WidgetManager.layout.idleTime || 5);
+        
+        if (enabled && mins > 0) {
+          idleTimeout = setTimeout(() => goIdle(false), mins * 60 * 1000);
+        }
       }
     };
 
@@ -546,6 +549,7 @@ const App = {
     };
 
     const goIdle = (isManual = false) => {
+      clearTimeout(idleTimeout);
       this._isManualIdle = isManual;
       const active = document.activeElement;
       if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) {
