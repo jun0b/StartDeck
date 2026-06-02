@@ -606,7 +606,9 @@ const WidgetManager = {
       case 'text':
         return `<div class="form-group"><label class="form-label">${field.label}</label><input class="form-input" data-field="${field.key}" type="text" value="${this._escAttr(val)}" placeholder="${field.placeholder || ''}"></div>`;
       case 'number':
-        return `<div class="form-group"><label class="form-label">${field.label}</label><input class="form-input" data-field="${field.key}" type="number" value="${val}" min="${field.min || 0}" max="${field.max || 999}"></div>`;
+        return `<div class="form-group"><label class="form-label">${field.label}</label><input class="form-input" data-field="${field.key}" type="number" value="${val}" min="${field.min || 0}" max="${field.max || 999}" step="${field.step || '1'}"></div>`;
+      case 'color':
+        return `<div class="form-group"><label class="form-label">${field.label}</label><input class="form-input" data-field="${field.key}" type="color" value="${val || '#000000'}" style="height:32px;padding:2px;"></div>`;
       case 'select':
         return `<div class="form-group"><label class="form-label">${field.label}</label><select class="form-select" data-field="${field.key}">${(field.options || []).map(o => `<option value="${o.value}" ${o.value === val ? 'selected' : ''}>${o.label}</option>`).join('')}</select></div>`;
       case 'textarea':
